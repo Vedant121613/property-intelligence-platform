@@ -1,0 +1,329 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Building2, 
+  Package, 
+  Info, 
+  ArrowDown, 
+  Search, 
+  ChevronRight,
+  Zap,
+  ChevronDown
+} from 'lucide-react';
+import Breadcrumbs from '../components/Breadcrumbs';
+import TransactionsTable from '../components/TransactionsTable';
+import EmptyState from '../components/EmptyState';
+import TransactionsModal from '../components/TransactionsModal';
+import ProjectCard from '../components/ProjectCard';
+import { getProjectDetails } from '../services/propertyService';
+
+export default function ProjectPage({
+  cityId = 'pune',
+  localityId = 'saswad-road',
+  projectId = 'heera-solitaire',
+  onNavigate
+}) {
+  const [project, setProject] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showAllTxnsModal, setShowAllTxnsModal] = useState(false);
+  const [bhkFilter, setBhkFilter] = useState('all');
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    getProjectDetails(projectId)
+      .then(res => {
+        if (isMounted) {
+          setProject(res);
+          setLoading(false);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        if (isMounted) setLoading(false);
+      });
+
+    return () => { isMounted = false; };
+  }, [projectId]);
+
+  if (loading || !project) {
+    return (
+      <div style={{ padding: '60px 0', textAlign: 'center', color: '#64748B' }}>
+        Loading project details for {projectId}...
+      </div>
+    );
+  }
+
+  const cityName = project.city || (cityId.charAt(0).toUpperCase() + cityId.slice(1));
+  const localityName = project.locality || 'Saswad Road';
+
+  const breadcrumbs = [
+    { label: 'Home', target: { page: 'city', params: { cityId } } },
+    { label: cityName, target: { page: 'city', params: { cityId } } },
+    { label: localityName, target: { page: 'locality', params: { cityId, localityId } } }
+  ];
+
+  return (
+    <main className="project-detail-section">
+      <div className="content-wrapper">
+        {/* Breadcrumb Trail */}
+        <div style={{ marginBottom: '18px' }}>
+          <Breadcrumbs items={breadcrumbs} onNavigate={onNavigate} />
+        </div>
+
+        {/* Project Header Overview Card (Matches Screenshot 3) */}
+        <div className="project-overview-card">
+          <div className="project-title-header">
+            <div className="project-logo-badge">
+              <Building2 size={24} />
+            </div>
+            <div className="project-name-area">
+              <h1>{project.name}</h1>
+              <p>{localityName}</p>
+            </div>
+          </div>
+
+          <div className="project-body-grid">
+            {/* Photo Placeholder (Screenshot 3: Cube icon + No photos Available) */}
+            <div className="photo-placeholder-box">
+              <Package size={32} strokeWidth={1.5} color="#94A3B8" />
+              <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 500 }}>No photos Available</span>
+            </div>
+
+            {/* Specifications Grid */}
+            <div className="specs-grid">
+              <div className="spec-cell">
+                <span className="spec-label">Total Units</span>
+                <span className="spec-value">{project.totalUnits}</span>
+              </div>
+
+              <div className="spec-cell">
+                <span className="spec-label">
+                  Sold Units
+                  <Info size={12} color="#94A3B8" />
+                </span>
+                <span className="spec-value">{project.soldUnits}</span>
+              </div>
+
+              <div className="spec-cell">
+                <span className="spec-label">
+                  Completion
+                  <Info size={12} color="#94A3B8" />
+                </span>
+                <span className="spec-value">{project.completion}</span>
+              </div>
+
+              <div className="spec-cell">
+                <span className="spec-label">BHKs</span>
+                <span className="spec-value">{project.bhks || '1, 2'}</span>
+              </div>
+
+              <div className="spec-cell">
+                <span className="spec-label">Quoted Pricing</span>
+                <span className="spec-value">{project.quotedPricing}</span>
+              </div>
+
+              <div className="spec-cell">
+                <span className="spec-label">Developer</span>
+                <span className="spec-value">{project.developer}</span>
+              </div>
+
+              <div className="spec-cell">
+                <span className="spec-label">RERA Number(s)</span>
+                <span className="spec-value">{project.reraNumbers || project.rera || '-'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Last Sold Highlight Banner (Screenshot 3) */}
+          {project.lastSold && (
+            <div className="last-sold-banner">
+              <Zap size={16} color="#D97706" />
+              <span>
+                Last sold - {project.lastSold.date} - {project.lastSold.amount}
+              </span>
+              <ArrowDown size={14} />
+            </div>
+          )}
+        </div>
+
+        {/* BHK Analysis Section (Screenshot 3) */}
+        {project.bhkAnalysis && (
+          <div className="bhk-analysis-card">
+            <div className="bhk-analysis-header">
+              <div className="bhk-title-group">
+                <h2>{project.name} BHK Analysis</h2>
+                <div title="Analysis based on registered agreements" style={{ display: 'inline-flex', cursor: 'pointer' }}>
+                  <Info size={14} color="#64748B" />
+                </div>
+                <div className="bhk-select-wrapper">
+                  <select 
+                    value={bhkFilter} 
+                    onChange={(e) => setBhkFilter(e.target.value)}
+                    className="bhk-filter-select"
+                    aria-label="Filter BHK Analysis"
+                  >
+                    <option value="all">All</option>
+                    <option value="1bhk">1 BHK</option>
+                    <option value="2bhk">2 BHK</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="bhk-meta-group">
+                <span className="bhk-updated-stamp">
+                  {project.bhkAnalysis.updatedDate || 'Last Updated on MahaRERA - Jan 2025'}
+                </span>
+                <span className="bhk-disclaimer-btn">
+                  <Info size={13} />
+                  <span>Disclaimer</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="bhk-analysis-body">
+              {/* Donut Progress Meter */}
+              <div className="bhk-donut-metric-row">
+                <div className="bhk-donut-graphic">
+                  <svg width="76" height="76" viewBox="0 0 76 76">
+                    <circle
+                      cx="38"
+                      cy="38"
+                      r="32"
+                      fill="none"
+                      stroke="#E0F2FE"
+                      strokeWidth="7"
+                    />
+                    <circle
+                      cx="38"
+                      cy="38"
+                      r="32"
+                      fill="none"
+                      stroke="#0284C7"
+                      strokeWidth="7"
+                      strokeDasharray="201"
+                      strokeDashoffset={201 * (1 - (project.bhkAnalysis.soldPercentage || 34) / 100)}
+                      strokeLinecap="round"
+                      transform="rotate(-90 38 38)"
+                    />
+                    <text
+                      x="38"
+                      y="43"
+                      textAnchor="middle"
+                      fontSize="14"
+                      fontWeight="800"
+                      fill="#0369A1"
+                    >
+                      {project.bhkAnalysis.soldPercentage || 34}%
+                    </text>
+                  </svg>
+                </div>
+
+                <div className="bhk-donut-summary">
+                  <span className="bhk-units-label">UNITS SOLD</span>
+                  <span className="bhk-units-count">
+                    {project.bhkAnalysis.unitsSoldSummary || '1,301 of 3,836'}
+                  </span>
+                </div>
+              </div>
+
+              {/* BHK Breakdown Table */}
+              <div className="bhk-table-container">
+                <table className="bhk-breakdown-table">
+                  <thead>
+                    <tr>
+                      <th>BHK</th>
+                      <th>TOTAL UNITS</th>
+                      <th>UNITS SOLD</th>
+                      <th>% UNITS SOLD</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(project.bhkAnalysis.breakdown || [])
+                      .filter(item => bhkFilter === 'all' || item.bhk.toLowerCase().replace(/\s+/g, '') === bhkFilter)
+                      .map((row, idx) => (
+                        <tr key={idx}>
+                          <td className="bhk-cell-bold">{row.bhk}</td>
+                          <td>{row.totalUnits}</td>
+                          <td>{row.unitsSold}</td>
+                          <td className="bhk-cell-pct">{row.percentage}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Not finding what you are looking for Banner */}
+        <div className="callout-search-banner">
+          <div className="callout-left">
+            <Search size={22} color="#0284C7" />
+            <span>Not finding what you are looking for?</span>
+          </div>
+          <button 
+            type="button" 
+            className="callout-btn"
+            onClick={() => onNavigate('locality', { cityId, localityId })}
+          >
+            Search here
+          </button>
+        </div>
+
+        {/* Recent Transactions Section */}
+        <TransactionsTable
+          transactions={project.transactions}
+          totalTransactionsCount={project.totalTransactionsCount || 72}
+          onViewAllClick={() => setShowAllTxnsModal(true)}
+          onNavigate={onNavigate}
+        />
+
+        {/* Litigations Section */}
+        <div className="info-card-section">
+          <div className="info-card-header">
+            <h2>Litigations related to {project.name}</h2>
+            <span className="info-card-count">Total cases: -</span>
+          </div>
+          <EmptyState title="No Data found" />
+        </div>
+
+        {/* RERA Complaints Section */}
+        <div className="info-card-section">
+          <div className="info-card-header">
+            <h2>RERA complaints for {project.name}</h2>
+            <span className="info-card-count">Total complaints: -</span>
+          </div>
+          <EmptyState title="No Data found" />
+        </div>
+
+        {/* Trending Projects in Locality Section */}
+        {project.trendingProjectsInLocality && project.trendingProjectsInLocality.length > 0 && (
+          <div className="trending-projects-section">
+            <h2>Trending projects in {localityName}</h2>
+            <div className="cards-grid-3">
+              {project.trendingProjectsInLocality.map((item) => (
+                <ProjectCard
+                  key={item.id}
+                  project={item}
+                  onClick={() => onNavigate('project', { 
+                    cityId, 
+                    localityId, 
+                    projectId: item.id 
+                  })}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Full Transactions Modal */}
+      <TransactionsModal
+        isOpen={showAllTxnsModal}
+        onClose={() => setShowAllTxnsModal(false)}
+        projectName={project.name}
+        transactions={project.transactions}
+      />
+    </main>
+  );
+}

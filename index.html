@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Pureframe - Transparent property intelligence platform with government registered sale deed transactions and authentic market pricing." />
+    <title>Pureframe | Registered Property Deed Transactions &amp; Pricing Intelligence</title>
+    <!-- Preconnect to Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- MSG91 hCaptcha renders here first. AuthPage.jsx moves it into a visible slot if user needs to verify. -->
+    <div id="msg91-captcha-container" style="position:fixed;bottom:-200px;left:0;z-index:1;width:1px;height:1px;overflow:hidden;"></div>
+
+    <script type="text/javascript">
+      // MSG91 Widget Configuration — exposeMethods:true prevents popup, exposes window.sendOtp etc.
+      var configuration = {
+        widgetId: "366a666d3673323037323934",
+        tokenAuth: "521126T3jK0puIc6a462148P1",
+        identifier: "",
+        exposeMethods: true,
+        captchaRenderId: 'msg91-captcha-container',
+        success: (data) => {
+          console.log('[MSG91 Widget] Success callback:', data);
+          if (window.__msg91OnSuccess) window.__msg91OnSuccess(data);
+        },
+        failure: (error) => {
+          console.error('[MSG91 Widget] Failure callback:', error);
+          if (window.__msg91OnFailure) window.__msg91OnFailure(error);
+        },
+      };
+
+      // Initialize widget ONCE when script loads — do NOT call initSendOTP again after this
+      window.__msg91WidgetReady = false;
+    </script>
+    <script
+      type="text/javascript"
+      src="https://verify.msg91.com/otp-provider.js"
+      onload="initSendOTP(configuration); window.__msg91WidgetReady = true; console.log('[MSG91] Widget initialized and ready.');"
+    ></script>
+
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

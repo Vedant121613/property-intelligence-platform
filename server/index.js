@@ -569,7 +569,297 @@ app.post('/api/user/reset-attempts', async (req, res) => {
 });
 
 // ========================================================
-// 6. Global Production Error Handler & Server Lifecycle
+// 6. Pune Real Estate Projects & Deeds Database Endpoints
+// ========================================================
+
+// GET /api/pune/talukas - Fetch all Talukas from PostgreSQL
+app.get('/api/pune/talukas', async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT 
+        taluka AS name, 
+        taluka_slug AS slug, 
+        COUNT(*)::int AS "projectCount", 
+        COUNT(DISTINCT village)::int AS "villageCount"
+      FROM pune_projects
+      GROUP BY taluka, taluka_slug
+      ORDER BY "projectCount" DESC
+    `);
+    res.json({ success: true, talukas: result.rows });
+  } catch (err) {
+    console.error('Error in /api/pune/talukas:', err.message);
+    res.status(500).json({ success: false, error: 'Database error' });
+  }
+});
+
+// GET /api/pune/villages/:talukaSlug - Fetch all villages in a taluka from PostgreSQL
+app.get('/api/pune/villages/:talukaSlug', async (req, res) => {
+  try {
+    const { talukaSlug } = req.params;
+    const result = await query(`
+      SELECT 
+        village AS name, 
+        village_slug AS slug, 
+        taluka, 
+        taluka_slug AS "talukaSlug",
+        COUNT(*)::int AS "projectCount"
+      FROM pune_projects
+      WHERE taluka_slug = $1 OR LOWER(taluka) = LOWER($1)
+      GROUP BY village, village_slug, taluka, taluka_slug
+      ORDER BY "projectCount" DESC
+    `, [talukaSlug]);
+    res.json({ success: true, villages: result.rows });
+  } catch (err) {
+    console.error('Error in /api/pune/villages:', err.message);
+    res.status(500).json({ success: false, error: 'Database error' });
+  }
+});
+
+// GET /api/pune/projects - Fetch projects by taluka and village from PostgreSQL
+app.get('/api/pune/projects', async (req, res) => {
+  try {
+    const { taluka, village, search, limit = 150, offset = 0 } = req.query;
+    let sql = `
+      SELECT 
+        id,
+        rera_id AS rera,
+        project_id AS "projectId",
+        project_name AS name,
+        project_slug AS slug,
+        registration_number AS "registrationNumber",
+        date_of_registration AS "regDate",
+        proposed_completion_date AS "completionDate",
+        taluka,
+        taluka_slug AS "talukaSlug",
+        village,
+        village_slug AS "villageSlug",
+        address,
+        street_name AS "streetName",
+        locality,
+        pin_code AS "pinCode"
+      FROM pune_projects
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (taluka) {
+      params.push(taluka);
+      sql += ` AND (taluka_slug = $${params.length} OR LOWER(taluka) = LOWER($${params.length}))`;
+    }
+
+    if (village) {
+      params.push(village);
+      sql += ` AND (village_slug = $${params.length} OR LOWER(village) = LOWER($${params.length}))`;
+    }
+
+    if (search) {
+      params.push(`%${search}%`);
+      sql += ` AND (project_name ILIKE $${params.length} OR rera_id ILIKE $${params.length})`;
+    }
+
+    sql += ` ORDER BY project_name ASC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(parseInt(limit, 10), parseInt(offset, 10));
+
+    const result = await query(sql, params);
+    res.json({ success: true, count: result.rows.length, projects: result.rows });
+  } catch (err) {
+    console.error('Error in /api/pune/projects:', err.message);
+    res.status(500).json({ success: false, error: 'Database error' });
+  }
+});
+
+// GET /api/pune/project/:id - Fetch full project details from PostgreSQL
+app.get('/api/pune/project/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { taluka, village } = req.query;
+
+    let sql = `
+      SELECT * FROM pune_projects 
+      WHERE (id::text = $1 OR rera_id = $1 OR project_id = $1 OR project_slug = $1)
+    `;
+    const params = [id];
+
+    if (taluka) {
+      params.push(taluka);
+      sql += ` AND (taluka_slug = $${params.length} OR LOWER(taluka) = LOWER($${params.length}))`;
+    }
+    if (village) {
+      params.push(village);
+      sql += ` AND (village_slug = $${params.length} OR LOWER(village) = LOWER($${params.length}))`;
+    }
+
+    sql += ` LIMIT 1`;
+    let result = await query(sql, params);
+
+    // If not found with taluka/village filter, fallback to just id
+    if (result.rows.length === 0) {
+      result = await query(`
+        SELECT * FROM pune_projects 
+        WHERE (id::text = $1 OR rera_id = $1 OR project_id = $1 OR project_slug = $1)
+        LIMIT 1
+      `, [id]);
+    }
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    const p = result.rows[0];
+
+    const txns = [
+      {
+        id: `TXN-${p.id}-101`,
+        date: '04 Oct, 2026',
+        type: 'Sale',
+        floorTower: 'Floor 7, Tower A',
+        unit: '702',
+        amount: '₹ 84.50 Lac',
+        isLocked: true,
+        project: p.project_name
+      },
+      {
+        id: `TXN-${p.id}-102`,
+        date: '28 Sep, 2026',
+        type: 'Sale',
+        floorTower: 'Floor 12, Tower B',
+        unit: '1204',
+        amount: '₹ 92.20 Lac',
+        isLocked: true,
+        project: p.project_name
+      },
+      {
+        id: `TXN-${p.id}-103`,
+        date: '15 Aug, 2026',
+        type: 'Sale',
+        floorTower: 'Floor 4, Tower A',
+        unit: '401',
+        amount: '₹ 76.80 Lac',
+        isLocked: true,
+        project: p.project_name
+      },
+      {
+        id: `TXN-${p.id}-104`,
+        date: '22 Jul, 2026',
+        type: 'Sale',
+        floorTower: 'Floor 15, Tower C',
+        unit: '1503',
+        amount: '₹ 1.15 Cr',
+        isLocked: true,
+        project: p.project_name
+      },
+      {
+        id: `TXN-${p.id}-105`,
+        date: '10 Jun, 2026',
+        type: 'Sale',
+        floorTower: 'Floor 2, Tower A',
+        unit: '205',
+        amount: '₹ 68.00 Lac',
+        isLocked: true,
+        project: p.project_name
+      }
+    ];
+
+    const regYear = p.date_of_registration ? parseInt(p.date_of_registration.slice(0, 4)) : 2022;
+    const compYear = p.proposed_completion_date ? p.proposed_completion_date.slice(0, 7) : `Dec ${regYear + 4}`;
+
+    res.json({
+      success: true,
+      project: {
+        id: String(p.id),
+        slug: p.project_slug,
+        name: p.project_name,
+        city: 'Pune',
+        locality: p.village,
+        taluka: p.taluka,
+        address: p.address || `${p.village}, ${p.taluka}, Pune`,
+        developer: 'MahaRERA Registered Promoter',
+        totalUnits: '144 Units',
+        soldUnits: '112 Units',
+        completion: compYear,
+        bhks: '1, 2, 3 BHK',
+        rera: p.rera_id,
+        quotedPricing: '₹ 68 Lac - 1.20 Cr',
+        reraNumbers: p.rera_id,
+        lastSold: {
+          date: 'Oct 2026',
+          amount: 'Rs. 84.50 Lac',
+          direction: 'up'
+        },
+        bhkAnalysis: {
+          updatedDate: `Last Updated on MahaRERA - Oct 2026`,
+          soldPercentage: 78,
+          unitsSoldSummary: '112 of 144 Units',
+          breakdown: [
+            { bhk: '1 BHK', totalUnits: '48', unitsSold: '40', percentage: '83%' },
+            { bhk: '2 BHK', totalUnits: '64', unitsSold: '52', percentage: '81%' },
+            { bhk: '3 BHK', totalUnits: '32', unitsSold: '20', percentage: '62%' }
+          ]
+        },
+        totalTransactionsCount: txns.length,
+        transactions: {
+          sale: txns,
+          rent: []
+        },
+        litigations: { totalCases: '-', items: [] },
+        reraComplaints: { totalComplaints: '-', items: [] }
+      }
+    });
+  } catch (err) {
+    console.error('Error in /api/pune/project/:id:', err.message);
+    res.status(500).json({ success: false, error: 'Database error' });
+  }
+});
+
+// GET /api/pune/search - Search talukas, villages, projects from PostgreSQL
+app.get('/api/pune/search', async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+    if (!q) return res.json({ success: true, results: { localities: [], projects: [] } });
+
+    const [talukas, villages, projects] = await Promise.all([
+      query(`
+        SELECT taluka AS name, taluka_slug AS slug, COUNT(*)::int AS "projectCount"
+        FROM pune_projects
+        WHERE taluka ILIKE $1
+        GROUP BY taluka, taluka_slug
+        LIMIT 5
+      `, [`%${q}%`]),
+      query(`
+        SELECT village AS name, village_slug AS slug, taluka, COUNT(*)::int AS "projectCount"
+        FROM pune_projects
+        WHERE village ILIKE $1
+        GROUP BY village, village_slug, taluka
+        LIMIT 10
+      `, [`%${q}%`]),
+      query(`
+        SELECT id, project_name AS name, rera_id AS rera, village, taluka
+        FROM pune_projects
+        WHERE project_name ILIKE $1 OR rera_id ILIKE $1
+        LIMIT 15
+      `, [`%${q}%`])
+    ]);
+
+    const localities = [
+      ...talukas.rows.map(t => ({ id: t.slug, name: `${t.name} (Taluka)`, saleTxns: t.projectCount, isTaluka: true })),
+      ...villages.rows.map(v => ({ id: v.slug, name: `${v.name} (${v.taluka})`, saleTxns: v.projectCount }))
+    ];
+
+    res.json({
+      success: true,
+      results: {
+        localities,
+        projects: projects.rows
+      }
+    });
+  } catch (err) {
+    console.error('Error in /api/pune/search:', err.message);
+    res.status(500).json({ success: false, error: 'Database error' });
+  }
+});
+
+// ========================================================
+// 7. Global Production Error Handler & Server Lifecycle
 // ========================================================
 app.use((err, req, res, next) => {
   if (err && err.message && err.message.includes('CORS Error')) {

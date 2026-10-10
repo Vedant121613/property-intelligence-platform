@@ -19,9 +19,16 @@ import {
 } from '../data/mockData.js';
 
 import puneHierarchy from '../data/puneHierarchyData.js';
+import {
+  dbGetPuneTalukas,
+  dbGetPuneVillages,
+  dbGetPuneProjects,
+  dbGetPuneProjectDetails,
+  dbSearchPune
+} from './dbService.js';
 
 const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || '/api/v1';
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 /**
  * Basic input sanitizer
@@ -50,15 +57,28 @@ export async function getCities() {
 }
 
 /**
- * Get Talukas of Pune district (from pune_project_data.csv)
+ * Get Talukas of Pune district from PostgreSQL database (with instant local fallback)
  */
+export async function fetchPuneTalukas() {
+  const dbData = await dbGetPuneTalukas();
+  if (dbData && dbData.length > 0) return dbData;
+  return puneHierarchy.talukas || [];
+}
+
 export function getPuneTalukas() {
   return puneHierarchy.talukas || [];
 }
 
 /**
- * Get Villages in a specific Taluka of Pune
+ * Get Villages in a specific Taluka from PostgreSQL database (with instant local fallback)
  */
+export async function fetchPuneVillages(talukaSlug) {
+  if (!talukaSlug) return [];
+  const dbData = await dbGetPuneVillages(talukaSlug);
+  if (dbData && dbData.length > 0) return dbData;
+  return getPuneVillages(talukaSlug);
+}
+
 export function getPuneVillages(talukaSlug) {
   if (!talukaSlug) return [];
   const clean = talukaSlug.toLowerCase();
@@ -66,8 +86,15 @@ export function getPuneVillages(talukaSlug) {
 }
 
 /**
- * Get Projects in a specific Village of a Taluka
+ * Get Projects in a Village from PostgreSQL database (with instant local fallback)
  */
+export async function fetchPuneProjects(talukaSlug, villageSlug, search = '') {
+  if (!talukaSlug || !villageSlug) return [];
+  const dbData = await dbGetPuneProjects(talukaSlug, villageSlug, search);
+  if (dbData && dbData.length > 0) return dbData;
+  return getPuneProjects(talukaSlug, villageSlug);
+}
+
 export function getPuneProjects(talukaSlug, villageSlug) {
   if (!talukaSlug || !villageSlug) return [];
   const key = `${talukaSlug.toLowerCase()}/${villageSlug.toLowerCase()}`;
@@ -179,6 +206,16 @@ export async function getLocalityProjects(cityId = 'pune', localityId = 'saswad-
  * Get complete project detail by ID with unlocked/locked deeds
  */
 export async function getProjectDetails(projectId = 'heera-solitaire', talukaSlug, villageSlug) {
+  // 1. Try querying real PostgreSQL database record first
+  try {
+    const dbProject = await dbGetPuneProjectDetails(projectId, talukaSlug, villageSlug);
+    if (dbProject) {
+      return dbProject;
+    }
+  } catch (err) {
+    console.warn('[propertyService] Database lookup failed, using fallback:', err.message);
+  }
+
   const normalized = (projectId || '').toLowerCase().replace(/\s+/g, '-');
   const baseMock = PROJECT_DETAILS[normalized];
 
@@ -351,6 +388,18 @@ export async function getHomepageData() {
 export async function searchProperties(query = '', cityId = 'pune') {
   const sanitized = sanitizeInput(query).toLowerCase();
   if (!sanitized) return { localities: [], projects: [] };
+
+  // Try PostgreSQL database search first
+  if (cityId === 'pune') {
+    try {
+      const dbResults = await dbSearchPune(sanitized);
+      if (dbResults && (dbResults.localities?.length > 0 || dbResults.projects?.length > 0)) {
+        return dbResults;
+      }
+    } catch {
+      // Proceed to local fallback
+    }
+  }
 
   const matchedLocalities = [];
   const matchedProjects = [];

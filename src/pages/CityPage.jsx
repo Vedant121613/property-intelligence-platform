@@ -16,6 +16,9 @@ import {
   getPuneTalukas, 
   getPuneVillages, 
   getPuneProjects, 
+  fetchPuneTalukas,
+  fetchPuneVillages,
+  fetchPuneProjects,
   getCityLocalities 
 } from '../services/propertyService';
 
@@ -29,19 +32,71 @@ export default function CityPage({ cityId = 'pune', onNavigate }) {
   const [selectedVillage, setSelectedVillage] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Load talukas list
-  const talukas = useMemo(() => getPuneTalukas(), []);
+  // Live database state with fallback
+  const [talukas, setTalukas] = useState(() => getPuneTalukas());
+  const [villages, setVillages] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [isLevelLoading, setIsLevelLoading] = useState(false);
 
-  // Load villages for selected taluka
-  const villages = useMemo(() => {
-    if (!selectedTaluka) return [];
-    return getPuneVillages(selectedTaluka.slug);
+  // 1. Fetch Talukas from PostgreSQL database on mount
+  useEffect(() => {
+    let isMounted = true;
+    fetchPuneTalukas()
+      .then(res => {
+        if (isMounted && res && res.length > 0) {
+          setTalukas(res);
+        }
+      })
+      .catch(err => console.warn('Taluka fetch error:', err));
+    return () => { isMounted = false; };
+  }, []);
+
+  // 2. Fetch Villages from PostgreSQL database when taluka is selected
+  useEffect(() => {
+    let isMounted = true;
+    if (selectedTaluka) {
+      setIsLevelLoading(true);
+      // Immediate fallback to prevent blank render
+      setVillages(getPuneVillages(selectedTaluka.slug));
+      fetchPuneVillages(selectedTaluka.slug)
+        .then(res => {
+          if (isMounted) {
+            if (res && res.length > 0) setVillages(res);
+            setIsLevelLoading(false);
+          }
+        })
+        .catch(err => {
+          console.warn('Villages fetch error:', err);
+          if (isMounted) setIsLevelLoading(false);
+        });
+    } else {
+      setVillages([]);
+    }
+    return () => { isMounted = false; };
   }, [selectedTaluka]);
 
-  // Load projects for selected village
-  const projects = useMemo(() => {
-    if (!selectedTaluka || !selectedVillage) return [];
-    return getPuneProjects(selectedTaluka.slug, selectedVillage.slug);
+  // 3. Fetch Projects from PostgreSQL database when village is selected
+  useEffect(() => {
+    let isMounted = true;
+    if (selectedTaluka && selectedVillage) {
+      setIsLevelLoading(true);
+      // Immediate fallback to prevent blank render
+      setProjects(getPuneProjects(selectedTaluka.slug, selectedVillage.slug));
+      fetchPuneProjects(selectedTaluka.slug, selectedVillage.slug)
+        .then(res => {
+          if (isMounted) {
+            if (res && res.length > 0) setProjects(res);
+            setIsLevelLoading(false);
+          }
+        })
+        .catch(err => {
+          console.warn('Projects fetch error:', err);
+          if (isMounted) setIsLevelLoading(false);
+        });
+    } else {
+      setProjects([]);
+    }
+    return () => { isMounted = false; };
   }, [selectedTaluka, selectedVillage]);
 
   useEffect(() => {

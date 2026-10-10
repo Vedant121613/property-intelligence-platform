@@ -365,3 +365,103 @@ export async function dbResetAttempts(phone) {
     return { success: true, free_attempts_left: 3 };
   }
 }
+
+// ========================================================
+// Pune Real Estate Projects & Deeds Database Queries
+// ========================================================
+
+/**
+ * Fetch all Pune Talukas from PostgreSQL database
+ */
+export async function dbGetPuneTalukas() {
+  try {
+    const res = await fetch(`${API_BASE}/pune/talukas`);
+    const data = await res.json();
+    if (data.success && Array.isArray(data.talukas) && data.talukas.length > 0) {
+      return data.talukas;
+    }
+  } catch (err) {
+    console.warn('[DB] Failed to fetch talukas from PostgreSQL backend, using fallback:', err.message);
+  }
+  return null;
+}
+
+/**
+ * Fetch all Villages in a Taluka from PostgreSQL database
+ */
+export async function dbGetPuneVillages(talukaSlug) {
+  if (!talukaSlug) return null;
+  try {
+    const res = await fetch(`${API_BASE}/pune/villages/${encodeURIComponent(talukaSlug)}`);
+    const data = await res.json();
+    if (data.success && Array.isArray(data.villages)) {
+      return data.villages;
+    }
+  } catch (err) {
+    console.warn(`[DB] Failed to fetch villages for taluka ${talukaSlug} from PostgreSQL:`, err.message);
+  }
+  return null;
+}
+
+/**
+ * Fetch Projects in a Village from PostgreSQL database
+ */
+export async function dbGetPuneProjects(talukaSlug, villageSlug, search = '') {
+  if (!talukaSlug || !villageSlug) return null;
+  try {
+    const params = new URLSearchParams({
+      taluka: talukaSlug,
+      village: villageSlug,
+      limit: '150'
+    });
+    if (search) params.append('search', search);
+
+    const res = await fetch(`${API_BASE}/pune/projects?${params.toString()}`);
+    const data = await res.json();
+    if (data.success && Array.isArray(data.projects)) {
+      return data.projects;
+    }
+  } catch (err) {
+    console.warn(`[DB] Failed to fetch projects for ${talukaSlug}/${villageSlug} from PostgreSQL:`, err.message);
+  }
+  return null;
+}
+
+/**
+ * Fetch Single Project details from PostgreSQL database
+ */
+export async function dbGetPuneProjectDetails(projectId, talukaSlug, villageSlug) {
+  if (!projectId) return null;
+  try {
+    const params = new URLSearchParams();
+    if (talukaSlug) params.append('taluka', talukaSlug);
+    if (villageSlug) params.append('village', villageSlug);
+
+    const url = `${API_BASE}/pune/project/${encodeURIComponent(projectId)}${params.toString() ? '?' + params.toString() : ''}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.success && data.project) {
+      return data.project;
+    }
+  } catch (err) {
+    console.warn(`[DB] Failed to fetch project ${projectId} from PostgreSQL:`, err.message);
+  }
+  return null;
+}
+
+/**
+ * Search Pune database for talukas, villages, projects
+ */
+export async function dbSearchPune(query) {
+  if (!query) return null;
+  try {
+    const res = await fetch(`${API_BASE}/pune/search?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    if (data.success && data.results) {
+      return data.results;
+    }
+  } catch (err) {
+    console.warn('[DB] Failed to search PostgreSQL:', err.message);
+  }
+  return null;
+}

@@ -54,19 +54,19 @@ export default function TransactionDetailPage({
 
   const breadcrumbs = [
     { label: 'Home', target: { page: 'home', params: {} } },
-    { label: txn.city || 'Mumbai', target: { page: 'city', params: { cityId: 'mumbai' } } },
-    { label: txn.locality, target: { page: 'transactions', params: { projectId: 'y-square', cityId: 'mumbai' } } },
-    { label: `${txn.project} • Unit ${txn.unitNo}` }
+    { label: txn.city || 'Pune', target: { page: 'city', params: { cityId: (txn.city || 'pune').toLowerCase() } } },
+    { label: txn.locality || 'Pune', target: { page: 'city', params: { cityId: (txn.city || 'pune').toLowerCase() } } },
+    { label: `${txn.project} • ${txn.unitNo}` }
   ];
 
   return (
     <div>
-      {/* Top Yellow Promo Bar (Screenshot 5) */}
+      {/* Top Trust Promo Bar */}
       <div className="yellow-promo-bar">
         <span className="yellow-promo-badge">NEW</span>
-        <span style={{ color: '#EA580C', fontWeight: 700 }}>✦ AI POWERED</span>
+        <span style={{ color: '#1D4ED8', fontWeight: 700 }}>✦ AI POWERED</span>
         <span>Search by Property Address</span>
-        <ChevronRight size={14} color="#EA580C" />
+        <ChevronRight size={14} color="#1D4ED8" />
       </div>
 
       <div className="content-wrapper" style={{ padding: '24px 24px 56px' }}>
@@ -112,8 +112,8 @@ export default function TransactionDetailPage({
                   width: '50px',
                   height: '50px',
                   borderRadius: '12px',
-                  background: '#FFF3EB',
-                  color: '#CF5C36',
+                  background: '#EFF6FF',
+                  color: '#1D4ED8',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -195,9 +195,9 @@ export default function TransactionDetailPage({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    border: '1px solid #FED7AA',
-                    background: '#FFF7ED',
-                    color: '#C2410C',
+                    border: '1px solid #BFDBFE',
+                    background: '#EFF6FF',
+                    color: '#1E40AF',
                     padding: '6px 14px',
                     borderRadius: '8px',
                     fontSize: '0.825rem',

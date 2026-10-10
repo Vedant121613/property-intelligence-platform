@@ -20,31 +20,32 @@ import { CITIES, HOMEPAGE_RECENT_TRANSACTIONS, USER_BENEFITS } from '../data/moc
 import CityMonumentCards from '../components/CityMonumentCards';
 
 export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
-  const [selectedCity, setSelectedCity] = useState(currentCity || 'mumbai');
+  const [selectedCity, setSelectedCity] = useState(currentCity || 'pune');
   const [searchVal, setSearchVal] = useState('');
   const [activeSubTab, setActiveSubTab] = useState('transactions');
+
+  React.useEffect(() => {
+    if (currentCity) {
+      setSelectedCity(currentCity);
+    }
+  }, [currentCity]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     const query = searchVal.toLowerCase();
-    if (query.includes('y square') || query.includes('thane')) {
-      onNavigate('transactions', { projectId: 'y-square', cityId: 'mumbai' });
-    } else if (query.includes('saswad') || query.includes('pune') || query.includes('heera')) {
+    if (query.includes('heera')) {
+      onNavigate('project', { cityId: 'pune', localityId: 'saswad-road', projectId: 'heera-solitaire' });
+    } else if (query.includes('saswad') || query.includes('pune') || query.includes('manchar')) {
       onNavigate('locality', { cityId: 'pune', localityId: 'saswad-road' });
     } else {
-      onNavigate('transactions', { projectId: 'y-square', cityId: selectedCity });
+      onNavigate('city', { cityId: 'pune' });
     }
   };
 
   const handleQuickChipClick = (term) => {
     setSearchVal(term);
-    if (term.includes('Y Square') || term.includes('Thane')) {
-      onNavigate('transactions', { projectId: 'y-square', cityId: 'mumbai' });
-    } else if (term.includes('Saswad')) {
-      onNavigate('locality', { cityId: 'pune', localityId: 'saswad-road' });
-    } else {
-      onNavigate('city', { cityId: 'mumbai' });
-    }
+    onSelectCity('pune');
+    onNavigate('city', { cityId: 'pune' });
   };
 
   return (
@@ -75,7 +76,7 @@ export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
             className={`subnav-tab-item ${activeSubTab === 'guarantee' ? 'active' : ''}`}
             onClick={() => setActiveSubTab('guarantee')}
           >
-            <span style={{ color: '#F05A28' }}>✦</span>
+            <span style={{ color: '#1D4ED8' }}>✦</span>
             <span>Fair Deal Guarantee</span>
           </div>
         </div>
@@ -102,18 +103,22 @@ export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
           {/* Elevated Glass Search Box */}
           <form className="hero-search-box" onSubmit={handleSearchSubmit}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <MapPin size={18} color="#F05A28" style={{ marginLeft: '12px' }} />
+              <MapPin size={18} color="#1D4ED8" style={{ marginLeft: '12px' }} />
               <select 
                 className="hero-city-select"
                 value={selectedCity}
                 onChange={(e) => {
-                  setSelectedCity(e.target.value);
-                  onSelectCity(e.target.value);
+                  const val = e.target.value;
+                  if (val === 'mumbai') return; // Cannot select Mumbai
+                  setSelectedCity(val);
+                  onSelectCity(val);
                 }}
                 aria-label="City Selector"
               >
                 {CITIES.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id} disabled={c.isUpcoming}>
+                    {c.name} {c.isUpcoming ? '• Upcoming (Unavailable)' : '• Live'}
+                  </option>
                 ))}
               </select>
             </div>
@@ -123,7 +128,7 @@ export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
             <input 
               type="text"
               className="hero-search-input"
-              placeholder="Search by Project, Township, or Locality (e.g. Y Square, Saswad Road)..."
+              placeholder="Search by Project, Township, or Locality (e.g. Saswad Road, Heera Solitaire)..."
               value={searchVal}
               onChange={(e) => setSearchVal(e.target.value)}
               aria-label="Search properties"
@@ -137,7 +142,7 @@ export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
           {/* Popular Fast Search Chips */}
           <div className="quick-search-chips">
             <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600 }}>Popular Searches:</span>
-            {['Y Square (Thane West)', 'Saswad Road (Pune)', 'Whitefield (Bangalore)', 'Bandra West (Mumbai)', 'Heera Solitaire'].map(chip => (
+            {['Haveli Taluka', 'Baner', 'Mulshi Taluka', 'Wagholi', 'Kothrud', 'Mawal Taluka'].map(chip => (
               <button
                 key={chip}
                 type="button"
@@ -194,7 +199,7 @@ export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
                 className="ai-tool-card"
                 onClick={() => onNavigate('transactions', { projectId: 'y-square', cityId: 'mumbai' })}
               >
-                <div className="ai-tool-icon-wrap" style={{ background: '#FFF7ED', color: '#EA580C' }}>
+                <div className="ai-tool-icon-wrap" style={{ background: '#EFF6FF', color: '#1D4ED8' }}>
                   <MapPin size={20} />
                 </div>
                 <div className="ai-tool-text">
@@ -240,7 +245,7 @@ export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
             <div className="aggregation-actions">
               <button 
                 type="button" 
-                className="btn-primary-orange-outline"
+                className="btn-primary-blue-outline"
                 onClick={() => onNavigate('transactions', { projectId: 'y-square', cityId: 'mumbai' })}
               >
                 View Sample Deeds
@@ -259,10 +264,10 @@ export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
           <div 
             style={{
               background: '#FFFFFF',
-              border: '1px solid #FDE68A',
+              border: '1px solid #BFDBFE',
               borderRadius: '16px',
               padding: '24px',
-              boxShadow: '0 12px 30px rgba(217, 119, 6, 0.12)',
+              boxShadow: '0 12px 30px rgba(37, 99, 235, 0.12)',
               width: '320px',
               textAlign: 'center'
             }}
@@ -275,8 +280,8 @@ export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
             <div 
               style={{
                 height: '110px',
-                background: '#FEF3C7',
-                border: '1px dashed #D97706',
+                background: '#EFF6FF',
+                border: '1.5px dashed #3B82F6',
                 borderRadius: '8px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -285,11 +290,11 @@ export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
                 padding: '12px'
               }}
             >
-              <FileText size={32} color="#B45309" />
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#92400E', marginTop: '6px' }}>
+              <FileText size={32} color="#1D4ED8" />
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1E40AF', marginTop: '6px', letterSpacing: '0.04em' }}>
                 GOVERNMENT REGISTRY DEED
               </span>
-              <span style={{ fontSize: '0.65rem', color: '#78350F' }}>
+              <span style={{ fontSize: '0.65rem', color: '#3B82F6' }}>
                 Department of Registration &amp; Stamps
               </span>
             </div>

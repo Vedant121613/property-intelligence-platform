@@ -10,8 +10,6 @@ import {
   Heart, 
   FileText, 
   Info, 
-  BookOpen, 
-  HelpCircle,
   LogOut,
   LogIn,
   CheckCircle2
@@ -32,7 +30,7 @@ export default function ProfileDrawer({
     onClose();
     if (action === 'home') onNavigate('home');
     else if (action === 'profile') onNavigate('profile');
-    else if (action === 'buy') onNavigate('city', { cityId: 'mumbai' });
+    else if (action === 'buy') onNavigate('city', { cityId: 'pune' });
     else if (action === 'sell') onNavigate('home');
     else if (action === 'plans') onNavigate('plans');
     else if (action === 'favourites') onNavigate('profile');
@@ -195,22 +193,6 @@ export default function ProfileDrawer({
           >
             <Info size={18} color="#64748B" />
             <span>About Us</span>
-          </div>
-
-          <div 
-            className="drawer-nav-item"
-            onClick={() => { onClose(); onNavigate('home'); }}
-          >
-            <BookOpen size={18} color="#64748B" />
-            <span>Blogs</span>
-          </div>
-
-          <div 
-            className="drawer-nav-item"
-            onClick={() => { onClose(); onNavigate('locality', { cityId: 'pune', localityId: 'saswad-road' }); }}
-          >
-            <HelpCircle size={18} color="#64748B" />
-            <span>FAQs</span>
           </div>
         </div>
 

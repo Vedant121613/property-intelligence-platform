@@ -98,7 +98,7 @@ export default function HeroBanner({
                 onClick={() => setShowDurationMenu(!showDurationMenu)}
                 aria-label="Filter transaction duration"
               >
-                <Calendar size={15} color="#CF5C36" />
+                <Calendar size={15} color="#1D4ED8" />
                 <span>{activeDurationObj.label}</span>
                 <ChevronDown size={14} color="#64748B" />
               </button>
@@ -115,7 +115,7 @@ export default function HeroBanner({
                       className="search-item"
                       style={{
                         fontWeight: f.id === currentDuration ? '600' : 'normal',
-                        color: f.id === currentDuration ? '#CF5C36' : 'inherit'
+                        color: f.id === currentDuration ? '#1D4ED8' : 'inherit'
                       }}
                       onClick={() => {
                         if (onDurationChange) onDurationChange(f.id);

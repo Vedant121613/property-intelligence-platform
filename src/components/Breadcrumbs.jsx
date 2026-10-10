@@ -20,7 +20,9 @@ export default function Breadcrumbs({ items = [], onNavigate, light = false }) {
                 href="#"
                 onClick={(e) => {
                   e.preventDefault();
-                  if (item.target) {
+                  if (item.onClick) {
+                    item.onClick();
+                  } else if (item.target && onNavigate) {
                     onNavigate(item.target.page, item.target.params);
                   }
                 }}

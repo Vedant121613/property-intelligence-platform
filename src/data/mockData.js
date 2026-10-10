@@ -11,78 +11,29 @@
 
 export const CITIES = [
   { 
-    id: 'mumbai', 
-    name: 'Mumbai', 
-    state: 'Maharashtra', 
-    totalLocalities: 332, 
-    totalProjects: 3200,
-    monument: 'gateway-of-india',
-    monumentName: 'Gateway of India'
-  },
-  { 
     id: 'pune', 
     name: 'Pune', 
     state: 'Maharashtra', 
     totalLocalities: 282, 
     totalProjects: 1450,
     monument: 'shaniwar-wada',
-    monumentName: 'Shaniwar Wada'
+    monumentName: 'Shaniwar Wada',
+    isUpcoming: false,
+    status: 'Live'
   },
   { 
-    id: 'bangalore', 
-    name: 'Bangalore', 
-    state: 'Karnataka', 
-    totalLocalities: 340, 
-    totalProjects: 2100,
-    monument: 'vidhana-soudha',
-    monumentName: 'Vidhana Soudha'
-  },
-  { 
-    id: 'hyderabad', 
-    name: 'Hyderabad', 
-    state: 'Telangana', 
-    totalLocalities: 220, 
-    totalProjects: 1300,
-    monument: 'charminar',
-    monumentName: 'Charminar'
-  },
-  { 
-    id: 'chennai', 
-    name: 'Chennai', 
-    state: 'Tamil Nadu', 
-    totalLocalities: 195, 
-    totalProjects: 1150,
-    monument: 'ripon-building',
-    monumentName: 'Ripon Building'
-  },
-  { 
-    id: 'noida', 
-    name: 'Noida', 
-    state: 'Uttar Pradesh', 
-    totalLocalities: 180, 
-    totalProjects: 980,
-    monument: 'noida-tower',
-    monumentName: 'Noida City Center'
-  },
-  { 
-    id: 'delhi', 
-    name: 'Delhi', 
-    state: 'Delhi NCR', 
-    totalLocalities: 380, 
-    totalProjects: 2600,
-    monument: 'india-gate',
-    monumentName: 'India Gate'
-  },
-  { 
-    id: 'ahmedabad', 
-    name: 'Ahmedabad', 
-    state: 'Gujarat', 
-    totalLocalities: 175, 
-    totalProjects: 890,
-    monument: 'sidi-saiyyed',
-    monumentName: 'Sidi Saiyyed Mosque'
+    id: 'mumbai', 
+    name: 'Mumbai', 
+    state: 'Maharashtra', 
+    totalLocalities: 332, 
+    totalProjects: 3200,
+    monument: 'gateway-of-india',
+    monumentName: 'Gateway of India',
+    isUpcoming: true,
+    status: 'Upcoming'
   }
 ];
+
 
 export const DURATION_FILTERS = [
   { id: '12m', label: '12 Months' },
@@ -103,10 +54,10 @@ export const HOMEPAGE_RECENT_TRANSACTIONS = [
   {
     id: 'hp-2',
     soldDate: 'Sold on 27 Feb 2024',
-    amount: '₹3.25 Cr',
-    locality: 'Whitefield, Bangalore',
-    unit: 'Villa No. 42',
-    carpetArea: '2,800 sq.ft'
+    amount: '₹1.85 Cr',
+    locality: 'Baner, Pune',
+    unit: 'Flat No. 804',
+    carpetArea: '1,320 sq.ft'
   },
   {
     id: 'hp-3',
@@ -153,8 +104,26 @@ export const USER_BENEFITS = [
   }
 ];
 
-// Complete Localities by City (Matches Screenshot 2 for Mumbai)
+// Complete Localities by City (Pune Live & Mumbai Upcoming)
 export const LOCALITIES_BY_CITY = {
+  pune: [
+    { id: 'saswad-road', name: 'Saswad Road', saleTxns: 68, activeProjects: 7, avgPriceSqFt: '₹ 4,850/sq.ft' },
+    { id: 'manchar', name: 'Manchar', saleTxns: 58, activeProjects: 5, avgPriceSqFt: '₹ 3,400/sq.ft' },
+    { id: 'sanghavi', name: 'Sanghavi', saleTxns: 62, activeProjects: 12, avgPriceSqFt: '₹ 7,100/sq.ft' },
+    { id: 'somwar-peth', name: 'Somwar Peth', saleTxns: 47, activeProjects: 6, avgPriceSqFt: '₹ 9,200/sq.ft' },
+    { id: 'lulla-nagar', name: 'Lulla Nagar', saleTxns: 52, activeProjects: 9, avgPriceSqFt: '₹ 8,900/sq.ft' },
+    { id: 'chandan-nagar', name: 'Chandan Nagar', saleTxns: 63, activeProjects: 14, avgPriceSqFt: '₹ 6,750/sq.ft' },
+    { id: 'rasta-peth', name: 'Rasta Peth', saleTxns: 57, activeProjects: 4, avgPriceSqFt: '₹ 8,400/sq.ft' },
+    { id: 'shukrawar-peth', name: 'Shukrawar Peth', saleTxns: 58, activeProjects: 8, avgPriceSqFt: '₹ 9,500/sq.ft' },
+    { id: 'khed', name: 'Khed', saleTxns: 55, activeProjects: 6, avgPriceSqFt: '₹ 3,600/sq.ft' },
+    { id: 'parvati-gaon', name: 'Parvati Gaon', saleTxns: 54, activeProjects: 7, avgPriceSqFt: '₹ 7,800/sq.ft' },
+    { id: 'uttam-nagar', name: 'Uttam Nagar', saleTxns: 48, activeProjects: 5, avgPriceSqFt: '₹ 4,500/sq.ft' },
+    { id: 'purandar', name: 'Purandar', saleTxns: 54, activeProjects: 4, avgPriceSqFt: '₹ 3,200/sq.ft' },
+    { id: 'chourainagar', name: 'Chourainagar', saleTxns: 48, activeProjects: 6, avgPriceSqFt: '₹ 5,100/sq.ft' },
+    { id: 'university-road', name: 'University Road', saleTxns: 44, activeProjects: 11, avgPriceSqFt: '₹ 11,500/sq.ft' },
+    { id: 'aundh-road', name: 'Aundh Road', saleTxns: 41, activeProjects: 15, avgPriceSqFt: '₹ 9,800/sq.ft' },
+    { id: 'karve-road', name: 'Karve Road', saleTxns: 41, activeProjects: 13, avgPriceSqFt: '₹ 10,200/sq.ft' }
+  ],
   mumbai: [
     { id: 'thane-west', name: 'Thane West', saleTxns: 7536, activeProjects: 124, avgPriceSqFt: '₹ 14,800/sq.ft' },
     { id: 'mira-road', name: 'Mira Road', saleTxns: 7152, activeProjects: 98, avgPriceSqFt: '₹ 9,600/sq.ft' },
@@ -175,51 +144,6 @@ export const LOCALITIES_BY_CITY = {
     { id: 'kandivali-east', name: 'Kandivali East', saleTxns: 2210, activeProjects: 52, avgPriceSqFt: '₹ 21,500/sq.ft' },
     { id: 'bandra-west', name: 'Bandra West', saleTxns: 920, activeProjects: 24, avgPriceSqFt: '₹ 45,000/sq.ft' },
     { id: 'borivali-west', name: 'Borivali West', saleTxns: 1850, activeProjects: 44, avgPriceSqFt: '₹ 21,500/sq.ft' }
-  ],
-  pune: [
-    { id: 'saswad-road', name: 'Saswad Road', saleTxns: 68, activeProjects: 7, avgPriceSqFt: '₹ 4,850/sq.ft' },
-    { id: 'manchar', name: 'Manchar', saleTxns: 58, activeProjects: 5, avgPriceSqFt: '₹ 3,400/sq.ft' },
-    { id: 'sanghavi', name: 'Sanghavi', saleTxns: 62, activeProjects: 12, avgPriceSqFt: '₹ 7,100/sq.ft' },
-    { id: 'somwar-peth', name: 'Somwar Peth', saleTxns: 47, activeProjects: 6, avgPriceSqFt: '₹ 9,200/sq.ft' },
-    { id: 'lulla-nagar', name: 'Lulla Nagar', saleTxns: 52, activeProjects: 9, avgPriceSqFt: '₹ 8,900/sq.ft' },
-    { id: 'chandan-nagar', name: 'Chandan Nagar', saleTxns: 63, activeProjects: 14, avgPriceSqFt: '₹ 6,750/sq.ft' },
-    { id: 'rasta-peth', name: 'Rasta Peth', saleTxns: 57, activeProjects: 4, avgPriceSqFt: '₹ 8,400/sq.ft' },
-    { id: 'shukrawar-peth', name: 'Shukrawar Peth', saleTxns: 58, activeProjects: 8, avgPriceSqFt: '₹ 9,500/sq.ft' },
-    { id: 'khed', name: 'Khed', saleTxns: 55, activeProjects: 6, avgPriceSqFt: '₹ 3,600/sq.ft' },
-    { id: 'parvati-gaon', name: 'Parvati Gaon', saleTxns: 54, activeProjects: 7, avgPriceSqFt: '₹ 7,800/sq.ft' },
-    { id: 'uttam-nagar', name: 'Uttam Nagar', saleTxns: 48, activeProjects: 5, avgPriceSqFt: '₹ 4,500/sq.ft' },
-    { id: 'purandar', name: 'Purandar', saleTxns: 54, activeProjects: 4, avgPriceSqFt: '₹ 3,200/sq.ft' },
-    { id: 'chourainagar', name: 'Chourainagar', saleTxns: 48, activeProjects: 6, avgPriceSqFt: '₹ 5,100/sq.ft' },
-    { id: 'university-road', name: 'University Road', saleTxns: 44, activeProjects: 11, avgPriceSqFt: '₹ 11,500/sq.ft' },
-    { id: 'aundh-road', name: 'Aundh Road', saleTxns: 41, activeProjects: 15, avgPriceSqFt: '₹ 9,800/sq.ft' },
-    { id: 'karve-road', name: 'Karve Road', saleTxns: 41, activeProjects: 13, avgPriceSqFt: '₹ 10,200/sq.ft' }
-  ],
-  bangalore: [
-    { id: 'whitefield', name: 'Whitefield', saleTxns: 1420, activeProjects: 34, avgPriceSqFt: '₹ 8,200/sq.ft' },
-    { id: 'bellandur', name: 'Bellandur', saleTxns: 1100, activeProjects: 22, avgPriceSqFt: '₹ 9,500/sq.ft' },
-    { id: 'sarjapur-road', name: 'Sarjapur Road', saleTxns: 1280, activeProjects: 29, avgPriceSqFt: '₹ 7,800/sq.ft' },
-    { id: 'electronic-city', name: 'Electronic City', saleTxns: 950, activeProjects: 25, avgPriceSqFt: '₹ 5,600/sq.ft' }
-  ],
-  hyderabad: [
-    { id: 'gachibowli', name: 'Gachibowli', saleTxns: 840, activeProjects: 26, avgPriceSqFt: '₹ 8,900/sq.ft' },
-    { id: 'madhapur', name: 'Madhapur', saleTxns: 690, activeProjects: 21, avgPriceSqFt: '₹ 9,800/sq.ft' },
-    { id: 'kondapur', name: 'Kondapur', saleTxns: 780, activeProjects: 24, avgPriceSqFt: '₹ 8,200/sq.ft' }
-  ],
-  chennai: [
-    { id: 'omr', name: 'Old Mahabalipuram Road', saleTxns: 610, activeProjects: 19, avgPriceSqFt: '₹ 6,400/sq.ft' },
-    { id: 'velachery', name: 'Velachery', saleTxns: 540, activeProjects: 16, avgPriceSqFt: '₹ 8,100/sq.ft' }
-  ],
-  noida: [
-    { id: 'sector-150', name: 'Sector 150', saleTxns: 520, activeProjects: 18, avgPriceSqFt: '₹ 6,500/sq.ft' },
-    { id: 'sector-137', name: 'Sector 137', saleTxns: 480, activeProjects: 14, avgPriceSqFt: '₹ 5,800/sq.ft' }
-  ],
-  delhi: [
-    { id: 'dwarka', name: 'Dwarka', saleTxns: 790, activeProjects: 22, avgPriceSqFt: '₹ 11,200/sq.ft' },
-    { id: 'rohini', name: 'Rohini', saleTxns: 640, activeProjects: 19, avgPriceSqFt: '₹ 10,500/sq.ft' }
-  ],
-  ahmedabad: [
-    { id: 'sg-highway', name: 'SG Highway', saleTxns: 560, activeProjects: 17, avgPriceSqFt: '₹ 5,400/sq.ft' },
-    { id: 'bopal', name: 'Bopal', saleTxns: 490, activeProjects: 15, avgPriceSqFt: '₹ 4,700/sq.ft' }
   ]
 };
 

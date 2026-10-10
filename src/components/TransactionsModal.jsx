@@ -84,7 +84,7 @@ export default function TransactionsModal({
                     fontSize: '0.85rem',
                     fontWeight: 600,
                     textTransform: 'capitalize',
-                    background: filterType === type ? '#CF5C36' : '#F1F5F9',
+                    background: filterType === type ? '#1D4ED8' : '#F1F5F9',
                     color: filterType === type ? '#FFFFFF' : '#475569',
                     transition: 'all 0.15s ease'
                   }}

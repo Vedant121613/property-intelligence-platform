@@ -5,10 +5,10 @@ import {
   ShieldCheck, 
   CreditCard, 
   Building2, 
-  Database, 
   RotateCcw,
   Zap,
-  ArrowRight
+  ArrowRight,
+  X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -25,13 +25,22 @@ export default function PlansPage({ onNavigate }) {
 
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [successBanner, setSuccessBanner] = useState('');
+  const [pendingPlan, setPendingPlan] = useState(null);
+  const [showActivateModal, setShowActivateModal] = useState(false);
 
-  const handleChoosePlan = async (planId) => {
+  const handleOpenActivatePopup = (plan) => {
+    setPendingPlan(plan);
+    setShowActivateModal(true);
+  };
+
+  const handleConfirmActivatePlan = async (planId) => {
     setLoadingPlan(planId);
+    setShowActivateModal(false);
     setSuccessBanner('');
     try {
       await selectPlan(planId);
-      setSuccessBanner(`Plan ${planId.toUpperCase()} activated! Database updated with is_payment_done = true.`);
+      const planName = pendingPlan?.name || planId.toUpperCase();
+      setSuccessBanner(`🎉 ${planName} plan activated successfully! All pro features and unlimited deed valuations are now active.`);
     } catch (err) {
       console.error(err);
     } finally {
@@ -51,7 +60,7 @@ export default function PlansPage({ onNavigate }) {
       price: '₹0',
       period: 'forever',
       badge: 'Free Tier',
-      description: 'Test Pureframe with authentic registered deeds from local PostgreSQL',
+      description: 'Explore Pureframe with authentic government registered deed records',
       features: [
         '3 Free Deed Valuations',
         'Inspect Registration Dates & Floor Details',
@@ -132,37 +141,38 @@ export default function PlansPage({ onNavigate }) {
             Choose the Right Plan for Verified Deeds
           </h1>
           <p style={{ fontSize: '1rem', color: '#64748B', lineHeight: 1.5 }}>
-            Every account receives 3 free deed unlocks stored in your local PostgreSQL database. Upgrade anytime for unlimited transactions.
+            Every verified account receives 3 complimentary deed valuation unlocks. Upgrade anytime for unlimited access to authentic registry records.
           </p>
 
-          {/* Database Live Status Banner */}
-          <div 
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '12px',
-              background: '#FFFFFF',
-              border: '1px solid #E2E8F0',
-              borderRadius: '24px',
-              padding: '8px 18px',
-              marginTop: '20px',
-              fontSize: '0.825rem',
-              color: '#334155',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-            }}
-          >
-            <Database size={15} color="#10B981" />
-            <span>PostgreSQL Status:</span>
-            <span style={{ fontWeight: 700, color: '#059669' }}>Connected (pureframe_db)</span>
-            <span style={{ color: '#CBD5E1' }}>|</span>
-            <span>Mobile: <strong>{user?.rawPhone || user?.phone || '9172272519'}</strong></span>
-            <span style={{ color: '#CBD5E1' }}>|</span>
-            <span>Free Attempts: <strong>{freeAttemptsLeft}/3</strong></span>
-            <span style={{ color: '#CBD5E1' }}>|</span>
-            <span>Paid: <strong>{isPaymentDone ? 'TRUE' : 'FALSE'}</strong></span>
-            <span style={{ color: '#CBD5E1' }}>|</span>
-            <span>Plan: <strong>{selectedPlan.toUpperCase()}</strong></span>
-          </div>
+          {/* Account Status Badge */}
+          {user && (
+            <div 
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '12px',
+                background: '#FFFFFF',
+                border: '1px solid #E2E8F0',
+                borderRadius: '24px',
+                padding: '8px 20px',
+                marginTop: '18px',
+                fontSize: '0.825rem',
+                color: '#334155',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+              }}
+            >
+              <ShieldCheck size={16} color="#10B981" />
+              <span>Account: <strong>{user?.rawPhone || user?.phone}</strong></span>
+              <span style={{ color: '#CBD5E1' }}>•</span>
+              <span>Free Unlocks: <strong>{freeAttemptsLeft} of 3 remaining</strong></span>
+              {isPaymentDone && (
+                <>
+                  <span style={{ color: '#CBD5E1' }}>•</span>
+                  <span style={{ color: '#1D4ED8', fontWeight: 700 }}>{selectedPlan.toUpperCase()} Member</span>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Success Notice */}
@@ -206,8 +216,8 @@ export default function PlansPage({ onNavigate }) {
                 style={{
                   background: '#FFFFFF',
                   borderRadius: '16px',
-                  border: plan.popular ? '2px solid #F05A28' : '1px solid #E2E8F0',
-                  boxShadow: plan.popular ? '0 12px 30px rgba(240, 90, 40, 0.12)' : '0 4px 12px rgba(0,0,0,0.04)',
+                  border: plan.popular ? '2px solid #1D4ED8' : '1px solid #E2E8F0',
+                  boxShadow: plan.popular ? '0 12px 30px rgba(37, 99, 235, 0.16)' : '0 4px 12px rgba(0,0,0,0.04)',
                   padding: '28px 24px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -223,7 +233,7 @@ export default function PlansPage({ onNavigate }) {
                       position: 'absolute',
                       top: '-12px',
                       left: '24px',
-                      background: plan.popular ? 'linear-gradient(135deg, #F05A28 0%, #EA580C 100%)' : '#1E293B',
+                      background: plan.popular ? 'var(--brand-gradient)' : '#0F172A',
                       color: '#FFFFFF',
                       fontSize: '0.725rem',
                       fontWeight: 800,
@@ -271,7 +281,7 @@ export default function PlansPage({ onNavigate }) {
                 <button
                   type="button"
                   disabled={isCurrent || loadingPlan === plan.id}
-                  onClick={() => plan.isFree ? handleReset() : handleChoosePlan(plan.id)}
+                  onClick={() => plan.isFree ? handleReset() : handleOpenActivatePopup(plan)}
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -281,7 +291,7 @@ export default function PlansPage({ onNavigate }) {
                     cursor: isCurrent ? 'default' : 'pointer',
                     background: isCurrent 
                       ? '#E2E8F0' 
-                      : (plan.popular ? '#F05A28' : '#1E293B'),
+                      : (plan.popular ? '#1D4ED8' : '#0F172A'),
                     color: isCurrent ? '#64748B' : '#FFFFFF',
                     border: 'none',
                     display: 'flex',
@@ -291,7 +301,7 @@ export default function PlansPage({ onNavigate }) {
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <span>{loadingPlan === plan.id ? 'Updating Database...' : plan.buttonText}</span>
+                  <span>{loadingPlan === plan.id ? 'Activating Plan...' : plan.buttonText}</span>
                   {!isCurrent && <ArrowRight size={15} />}
                 </button>
               </div>
@@ -299,46 +309,183 @@ export default function PlansPage({ onNavigate }) {
           })}
         </div>
 
-        {/* Developer / Testing PostgreSQL Reset Console */}
+      </div>
+
+      {/* Activate Payment Plan Popup Modal */}
+      {showActivateModal && pendingPlan && (
         <div 
+          className="modal-backdrop" 
+          onClick={() => setShowActivateModal(false)}
           style={{
-            maxWidth: '680px',
-            margin: '0 auto',
-            background: '#FFFFFF',
-            border: '1px dashed #CBD5E1',
-            borderRadius: '12px',
-            padding: '20px 24px',
-            textAlign: 'center'
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 3000,
+            padding: '16px'
           }}
         >
-          <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1E293B', marginBottom: '6px' }}>
-            Developer &amp; Testing Controls (PostgreSQL pureframe_db)
-          </h4>
-          <p style={{ fontSize: '0.8rem', color: '#64748B', marginBottom: '14px' }}>
-            Click below anytime to reset your user record back to 3 free attempts and clear payment flag for repeat testing.
-          </p>
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="btn-secondary-white"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.825rem' }}
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              background: '#FFFFFF',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              animation: 'modalSlideIn 0.2s ease-out'
+            }}
+          >
+            {/* Modal Header */}
+            <div 
+              style={{
+                background: 'linear-gradient(135deg, #0B1320 0%, #1E3A8A 100%)',
+                padding: '24px',
+                color: '#FFFFFF',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
             >
-              <RotateCcw size={14} />
-              <span>Reset to 3 Free Attempts</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigate('transactions', { projectId: 'y-square', cityId: 'mumbai' })}
-              className="hero-search-btn"
-              style={{ padding: '8px 18px', fontSize: '0.825rem' }}
-            >
-              <span>Test Unlock on Y Square Deeds</span>
-            </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div 
+                  style={{ 
+                    width: '42px', 
+                    height: '42px', 
+                    borderRadius: '12px', 
+                    background: 'rgba(255, 255, 255, 0.15)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    border: '1px solid rgba(255, 255, 255, 0.2)'
+                  }}
+                >
+                  <Sparkles size={20} color="#60A5FA" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
+                    Activate Payment Plan
+                  </h3>
+                  <p style={{ fontSize: '0.8rem', color: '#94A3B8', margin: '2px 0 0' }}>
+                    Subscription Plan Activation
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowActivateModal(false)}
+                style={{ 
+                  background: 'rgba(255, 255, 255, 0.1)', 
+                  border: 'none', 
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#CBD5E1', 
+                  cursor: 'pointer'
+                }}
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '24px' }}>
+              <div 
+                style={{ 
+                  background: '#F8FAFC', 
+                  border: '1px solid #E2E8F0', 
+                  borderRadius: '12px', 
+                  padding: '16px 18px', 
+                  marginBottom: '18px' 
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>
+                    {pendingPlan.name}
+                  </span>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1D4ED8' }}>
+                    {pendingPlan.price} <span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#64748B' }}>{pendingPlan.period}</span>
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.825rem', color: '#64748B', margin: 0 }}>
+                  {pendingPlan.description}
+                </p>
+              </div>
+
+              <div 
+                style={{ 
+                  background: '#EFF6FF', 
+                  border: '1px solid #BFDBFE', 
+                  borderRadius: '12px', 
+                  padding: '14px 16px', 
+                  marginBottom: '22px', 
+                  display: 'flex', 
+                  gap: '12px', 
+                  alignItems: 'flex-start' 
+                }}
+              >
+                <ShieldCheck size={20} color="#1D4ED8" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div style={{ fontSize: '0.825rem', color: '#1E40AF', lineHeight: '1.45' }}>
+                  Would you like to activate the <strong>{pendingPlan.name}</strong> membership on your account now?
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowActivateModal(false)}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    borderRadius: '10px',
+                    border: '1px solid #CBD5E1',
+                    background: '#FFFFFF',
+                    color: '#475569',
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleConfirmActivatePlan(pendingPlan.id)}
+                  style={{
+                    flex: 2,
+                    padding: '12px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%)',
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 14px rgba(29, 78, 216, 0.35)'
+                  }}
+                >
+                  <CheckCircle2 size={17} />
+                  <span>Yes, Activate</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-
-      </div>
+      )}
     </div>
   );
 }

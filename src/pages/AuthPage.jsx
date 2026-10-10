@@ -6,7 +6,6 @@ import {
   CheckCircle2, 
   AlertCircle, 
   ShieldCheck,
-  MessageSquare,
   Smartphone,
   RefreshCw,
   Wifi,
@@ -314,7 +313,7 @@ export default function AuthPage({ onNavigate, initialPhone = '' }) {
 
       setAuthState('verified');
       setFeedback({ type: 'success', message: '✓ Verified! Signing in...' });
-      console.log('[AUTH] ✅ OTP verified. Syncing to PostgreSQL...');
+      console.log('[AUTH] ✅ OTP verified. Signing in...');
 
       setTimeout(async () => {
         try {
@@ -528,40 +527,16 @@ export default function AuthPage({ onNavigate, initialPhone = '' }) {
                   {isVerifying ? 'Verifying...' : 'Verify & Continue'}
                 </button>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {/* WhatsApp */}
-                  <button
-                    type="button"
-                    disabled={phoneClean.length < 10 || isSending}
-                    onClick={(e) => handleSendOtp('12', e)}
-                    style={{
-                      width: '100%', padding: '12px',
-                      background: '#25D366', color: '#FFFFFF',
-                      border: 'none', borderRadius: '8px',
-                      fontWeight: 700, fontSize: '0.925rem',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                      cursor: phoneClean.length >= 10 && !isSending ? 'pointer' : 'not-allowed',
-                      opacity: phoneClean.length >= 10 && !isSending ? 1 : 0.6,
-                      boxShadow: '0 2px 6px rgba(37,211,102,0.3)',
-                      transition: 'all 0.15s'
-                    }}
-                  >
-                    <MessageSquare size={18} />
-                    <span>{isSending ? 'Sending...' : 'Send OTP via WhatsApp'}</span>
-                  </button>
-
-                  {/* SMS */}
-                  <button
-                    type="button"
-                    disabled={phoneClean.length < 10 || isSending}
-                    onClick={(e) => handleSendOtp('11', e)}
-                    className={`auth-submit-btn ${phoneClean.length >= 10 ? 'active' : 'disabled'}`}
-                    style={{ background: '#1E293B', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                  >
-                    <Smartphone size={16} />
-                    <span>{isSending ? 'Sending...' : 'Send OTP via SMS'}</span>
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  disabled={phoneClean.length < 10 || isSending}
+                  onClick={(e) => handleSendOtp('11', e)}
+                  className={`auth-submit-btn ${phoneClean.length >= 10 ? 'active' : 'disabled'}`}
+                  style={{ width: '100%', padding: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.95rem' }}
+                >
+                  <Smartphone size={17} />
+                  <span>{isSending ? 'Sending Verification Code...' : 'Get Verification Code'}</span>
+                </button>
               )}
             </div>
 
@@ -589,7 +564,7 @@ export default function AuthPage({ onNavigate, initialPhone = '' }) {
 
           {/* Bottom Strip */}
           <div className="auth-card-bottom-pill">
-            <Sparkles size={16} color="#EA580C" style={{ flexShrink: 0 }} />
+            <Sparkles size={16} color="#1D4ED8" style={{ flexShrink: 0 }} />
             <span>Join 100,000+ smart buyers &amp; sellers</span>
           </div>
 

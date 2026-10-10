@@ -22,11 +22,11 @@ import AuthModal from './AuthModal';
 import ProfileDrawer from './ProfileDrawer';
 
 export default function Navbar({ 
-  currentCity = 'mumbai', 
+  currentCity = 'pune', 
   onSelectCity, 
   onNavigate 
 }) {
-  const { user, isAuthenticated, logout, unlockedTxns, savedProperties } = useAuth();
+  const { user, isAuthenticated, logout, unlockedTxns, savedProperties, freeAttemptsLeft, isPaymentDone } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState({ localities: [], projects: [] });
@@ -133,34 +133,72 @@ export default function Navbar({
                 onClick={() => setShowCityDropdown(!showCityDropdown)}
                 aria-label="Select City"
               >
-                <MapPin size={15} color="#F05A28" />
+                <MapPin size={15} color="#1D4ED8" />
                 <span>{activeCityObj.name}</span>
+                {activeCityObj.isUpcoming && (
+                  <span style={{ fontSize: '0.65rem', background: '#FEF3C7', color: '#92400E', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
+                    Upcoming
+                  </span>
+                )}
                 <ChevronDown size={14} color="#64748B" />
               </button>
 
               {showCityDropdown && (
                 <div 
                   className="search-results-dropdown" 
-                  style={{ width: '210px', top: '100%', left: 0 }}
+                  style={{ width: '230px', top: '100%', left: 0, padding: '6px' }}
                 >
-                  <div className="search-group-title">Select Registry Metro</div>
-                  {CITIES.map(city => (
-                    <div
-                      key={city.id}
-                      className="search-item"
-                      onClick={() => {
-                        onSelectCity(city.id);
-                        setShowCityDropdown(false);
-                        onNavigate('city', { cityId: city.id });
-                      }}
-                    >
-                      <div>
-                        <span className="search-item-name">{city.name}</span>
-                        <div style={{ fontSize: '0.7rem', color: '#94A3B8' }}>{city.state}</div>
+                  <div className="search-group-title" style={{ padding: '6px 8px 4px', fontSize: '0.7rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>
+                    Select Registry Metro
+                  </div>
+                  {CITIES.map(city => {
+                    const isUpcoming = Boolean(city.isUpcoming);
+                    return (
+                      <div
+                        key={city.id}
+                        className={`search-item ${isUpcoming ? 'disabled-upcoming-item' : ''}`}
+                        style={{
+                          padding: '9px 12px',
+                          borderRadius: '8px',
+                          background: city.id === currentCity ? '#EFF6FF' : 'transparent',
+                          border: city.id === currentCity ? '1px solid #BFDBFE' : '1px solid transparent',
+                          marginBottom: '4px',
+                          cursor: isUpcoming ? 'not-allowed' : 'pointer',
+                          opacity: isUpcoming ? 0.65 : 1
+                        }}
+                        onClick={(e) => {
+                          if (isUpcoming) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return; // Mumbai cannot be selected
+                          }
+                          onSelectCity(city.id);
+                          setShowCityDropdown(false);
+                          onNavigate('city', { cityId: city.id });
+                        }}
+                        title={isUpcoming ? 'Mumbai is upcoming and cannot be selected yet' : `Switch to ${city.name}`}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span className="search-item-name" style={{ fontWeight: 700, color: isUpcoming ? '#64748B' : '#1E293B' }}>{city.name}</span>
+                            {isUpcoming ? (
+                              <span style={{ fontSize: '0.62rem', background: '#FEF3C7', color: '#92400E', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, border: '1px solid #FDE68A' }}>
+                                Upcoming
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: '0.62rem', background: '#DCFCE7', color: '#166534', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, border: '1px solid #BBF7D0' }}>
+                                Live
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: '#94A3B8' }}>{city.state}</div>
+                        </div>
+                        <span className="search-item-sub" style={{ fontSize: '0.72rem', fontWeight: 500, color: isUpcoming ? '#B45309' : '#64748B' }}>
+                          {isUpcoming ? 'Coming Soon' : `${city.totalLocalities} areas`}
+                        </span>
                       </div>
-                      <span className="search-item-sub">{city.totalLocalities} areas</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -226,7 +264,7 @@ export default function Navbar({
                         onClick={() => handleSelectProject(proj.id, 'saswad-road')}
                       >
                         <div className="search-item-info">
-                          <Building2 size={14} color="#F05A28" />
+                          <Building2 size={14} color="#1D4ED8" />
                           <div>
                             <div className="search-item-name">{proj.name}</div>
                             <div className="search-item-sub">{proj.locality}, {proj.city}</div>
@@ -283,6 +321,28 @@ export default function Navbar({
             {/* User Profile Avatar Button (Opens Slide-over Drawer - Screenshot 4) */}
             {isAuthenticated && user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* 3 of 3 Attempts Tracker - ONLY VISIBLE IF LOGGED IN */}
+                <div 
+                  onClick={() => onNavigate('profile')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    background: isPaymentDone ? '#EFF6FF' : '#ECFDF5',
+                    border: isPaymentDone ? '1px solid #BFDBFE' : '1px solid #A7F3D0',
+                    color: isPaymentDone ? '#1D4ED8' : '#047857',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    cursor: 'pointer'
+                  }}
+                  title={isPaymentDone ? 'Pro Member' : `${freeAttemptsLeft} of 3 Free Attempts remaining`}
+                >
+                  <ShieldCheck size={13} />
+                  <span>{isPaymentDone ? 'PRO' : `${freeAttemptsLeft}/3 Free`}</span>
+                </div>
+
                 <button 
                   type="button" 
                   className="user-profile-chip-btn"

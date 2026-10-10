@@ -20,6 +20,9 @@ export default function ProjectPage({
   cityId = 'pune',
   localityId = 'saswad-road',
   projectId = 'heera-solitaire',
+  talukaId,
+  villageName,
+  talukaName,
   onNavigate
 }) {
   const [project, setProject] = useState(null);
@@ -30,7 +33,7 @@ export default function ProjectPage({
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
-    getProjectDetails(projectId)
+    getProjectDetails(projectId, talukaId, localityId)
       .then(res => {
         if (isMounted) {
           setProject(res);
@@ -43,7 +46,7 @@ export default function ProjectPage({
       });
 
     return () => { isMounted = false; };
-  }, [projectId]);
+  }, [projectId, talukaId, localityId]);
 
   if (loading || !project) {
     return (
@@ -54,13 +57,19 @@ export default function ProjectPage({
   }
 
   const cityName = project.city || (cityId.charAt(0).toUpperCase() + cityId.slice(1));
-  const localityName = project.locality || 'Saswad Road';
+  const localityName = villageName || project.locality || 'Saswad Road';
+  const talName = talukaName || project.taluka;
 
   const breadcrumbs = [
-    { label: 'Home', target: { page: 'city', params: { cityId } } },
-    { label: cityName, target: { page: 'city', params: { cityId } } },
-    { label: localityName, target: { page: 'locality', params: { cityId, localityId } } }
+    { label: 'Home', target: { page: 'home', params: {} } },
+    { label: cityName, target: { page: 'city', params: { cityId } } }
   ];
+
+  if (talName) {
+    breadcrumbs.push({ label: `${talName} Taluka`, target: { page: 'city', params: { cityId } } });
+  }
+  breadcrumbs.push({ label: localityName, target: { page: 'city', params: { cityId } } });
+  breadcrumbs.push({ label: project.name });
 
   return (
     <main className="project-detail-section">

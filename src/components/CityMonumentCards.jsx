@@ -1,12 +1,13 @@
 import React from 'react';
 import { CITIES } from '../data/mockData';
+import { ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 
 export default function CityMonumentCards({ onSelectCity, onNavigate }) {
   const renderMonumentSvg = (monumentKey) => {
     switch (monumentKey) {
       case 'gateway-of-india': // Mumbai
         return (
-          <svg width="44" height="44" viewBox="0 0 64 64" fill="none" stroke="#2F6D69" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="48" height="48" viewBox="0 0 64 64" fill="none" stroke="#1D4ED8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 56h40M16 56V26h32v30M24 56V34h16v22M12 26h40M18 26V18h28v8M28 18V12h8v6" />
             <path d="M26 34c0-3.3 2.7-6 6-6s6 2.7 6 6" />
             <rect x="20" y="20" width="4" height="4" />
@@ -14,133 +15,160 @@ export default function CityMonumentCards({ onSelectCity, onNavigate }) {
           </svg>
         );
       case 'shaniwar-wada': // Pune
+      default:
         return (
-          <svg width="44" height="44" viewBox="0 0 64 64" fill="none" stroke="#2F6D69" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="48" height="48" viewBox="0 0 64 64" fill="none" stroke="#1D4ED8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M10 54h44M14 54V28h36v26M24 54V38h16v16M8 28h48l-4-10H12l-4 10z" />
             <path d="M20 18V12h24v6M26 38c0-3.3 2.7-6 6-6s6 2.7 6 6" />
             <circle cx="32" cy="23" r="2" />
           </svg>
         );
-      case 'vidhana-soudha': // Bangalore
-        return (
-          <svg width="44" height="44" viewBox="0 0 64 64" fill="none" stroke="#2F6D69" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M8 56h48M14 56V32h36v24M26 56V42h12v14M10 32h44M20 32V22h24v10M28 22c0-2.2 1.8-4 4-4s4 1.8 4 4" />
-            <path d="M32 18V10M16 32V26M48 32V26" />
-          </svg>
-        );
-      case 'charminar': // Hyderabad
-        return (
-          <svg width="44" height="44" viewBox="0 0 64 64" fill="none" stroke="#2F6D69" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 56h36M18 56V16M46 56V16M22 56V34h20v22M22 34c0-5.5 4.5-10 10-10s10 4.5 10 10" />
-            <path d="M16 16c0-2 2-4 4-4s4 2 4 4M40 16c0-2 2-4 4-4s4 2 4 4M18 10V6M46 10V6" />
-          </svg>
-        );
-      case 'ripon-building': // Chennai
-        return (
-          <svg width="44" height="44" viewBox="0 0 64 64" fill="none" stroke="#2F6D69" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 56h44M16 56V34h32v22M28 34V14l4-4 4 4v20M24 56V44h16v12" />
-            <circle cx="32" cy="24" r="3" />
-            <path d="M12 34h40" />
-          </svg>
-        );
-      case 'noida-tower': // Noida
-        return (
-          <svg width="44" height="44" viewBox="0 0 64 64" fill="none" stroke="#2F6D69" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 56h40M22 56V16l10-8 10 8v40M32 8v48M22 28h20M22 40h20" />
-            <path d="M14 56V36h8v20M42 56V36h8v20" />
-          </svg>
-        );
-      case 'india-gate': // Delhi
-        return (
-          <svg width="44" height="44" viewBox="0 0 64 64" fill="none" stroke="#2F6D69" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 56h36M18 56V22h28v34M24 56V36h16v20M14 22h36M20 22V14h24v8" />
-            <path d="M24 36c0-4.4 3.6-8 8-8s8 3.6 8 8" />
-          </svg>
-        );
-      case 'sidi-saiyyed': // Ahmedabad
-        return (
-          <svg width="44" height="44" viewBox="0 0 64 64" fill="none" stroke="#2F6D69" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 56h44M14 56V26h36v30M24 56V38h16v18M10 26c0-6.6 5.4-12 12-12h20c6.6 0 12 5.4 12 12" />
-            <path d="M26 38c0-3.3 2.7-6 6-6s6 2.7 6 6" />
-            <circle cx="32" cy="22" r="3" />
-          </svg>
-        );
-      default:
-        return null;
     }
   };
 
   return (
-    <section className="trending-cities-section" style={{ padding: '40px 0 24px', background: '#FFFFFF' }}>
+    <section className="trending-cities-section" style={{ padding: '36px 0 28px', background: '#FFFFFF' }}>
       <div className="content-wrapper">
-        <div style={{ marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1E293B' }}>
-            Trending projects in
-          </h2>
-          <p style={{ fontSize: '0.85rem', color: '#64748B', marginTop: '2px' }}>
-            Based on # of sale registrations
-          </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 700, color: '#1D4ED8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} />
+              Active Coverage
+            </div>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+              Deed Registry Metros
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: '#64748B', marginTop: '4px', margin: 0 }}>
+              Direct Inspector General of Registration (IGR) property records & verified values
+            </p>
+          </div>
         </div>
 
-        {/* 8 City Cards Row (Matches Screenshot 1) */}
+        {/* 2 Focused City Cards: Pune (Live) & Mumbai (Upcoming) */}
         <div 
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(8, 1fr)',
-            gap: '14px',
-            overflowX: 'auto',
-            paddingBottom: '8px'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 360px))',
+            gap: '18px'
           }}
           className="city-monument-grid"
         >
-          {CITIES.map((city) => (
-            <div
-              key={city.id}
-              onClick={() => {
-                if (onSelectCity) onSelectCity(city.id);
-                onNavigate('city', { cityId: city.id });
-              }}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                cursor: 'pointer',
-                transition: 'transform 0.2s ease',
-                userSelect: 'none'
-              }}
-              className="city-monument-item"
-            >
-              {/* Mint Green / Soft Aqua Monument Icon Box (Screenshot 1) */}
-              <div 
+          {CITIES.map((city) => {
+            const isUpcoming = Boolean(city.isUpcoming);
+
+            return (
+              <div
+                key={city.id}
+                onClick={(e) => {
+                  if (isUpcoming) {
+                    e.preventDefault();
+                    return; // Mumbai cannot be selected
+                  }
+                  if (onSelectCity) onSelectCity(city.id);
+                  onNavigate('city', { cityId: city.id });
+                }}
                 style={{
-                  width: '100%',
-                  aspectRatio: '1.05 / 1',
-                  background: '#E6F3F1',
-                  borderRadius: '12px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '10px',
-                  border: '1px solid #D1EBE7',
-                  transition: 'all 0.2s ease'
+                  gap: '18px',
+                  padding: '20px',
+                  borderRadius: '16px',
+                  background: isUpcoming 
+                    ? 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)' 
+                    : 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+                  border: isUpcoming ? '1px solid #FDE68A' : '1px solid #BFDBFE',
+                  cursor: isUpcoming ? 'default' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 4px 14px rgba(30, 58, 138, 0.05)',
+                  userSelect: 'none',
+                  opacity: isUpcoming ? 0.85 : 1
                 }}
-                className="monument-box"
+                className="city-monument-card-item"
               >
-                {renderMonumentSvg(city.monument)}
-              </div>
+                {/* Monument Icon Box */}
+                <div 
+                  style={{
+                    width: '72px',
+                    height: '72px',
+                    flexShrink: 0,
+                    background: '#FFFFFF',
+                    borderRadius: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: isUpcoming ? '1px solid #FCD34D' : '1px solid #93C5FD',
+                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.04)'
+                  }}
+                >
+                  {renderMonumentSvg(city.monument)}
+                </div>
 
-              <span 
-                style={{
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  color: '#334155',
-                  textAlign: 'center'
-                }}
-              >
-                {city.name}
-              </span>
-            </div>
-          ))}
+                {/* City Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                      {city.name}
+                    </h3>
+                    {isUpcoming ? (
+                      <span 
+                        style={{
+                          fontSize: '0.68rem',
+                          background: '#FEF3C7',
+                          color: '#B45309',
+                          padding: '2px 7px',
+                          borderRadius: '6px',
+                          fontWeight: 700,
+                          border: '1px solid #FCD34D',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}
+                      >
+                        <Sparkles size={11} />
+                        Upcoming
+                      </span>
+                    ) : (
+                      <span 
+                        style={{
+                          fontSize: '0.68rem',
+                          background: '#DCFCE7',
+                          color: '#15803D',
+                          padding: '2px 7px',
+                          borderRadius: '6px',
+                          fontWeight: 700,
+                          border: '1px solid #86EFAC',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}
+                      >
+                        <CheckCircle2 size={11} />
+                        Live Registry
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ fontSize: '0.78rem', color: '#475569', fontWeight: 500, marginBottom: '8px' }}>
+                    {isUpcoming ? 'Deed Indexing in Progress' : `${city.totalLocalities} Localities • ${city.totalProjects}+ Projects`}
+                  </div>
+
+                  <div 
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      color: isUpcoming ? '#92400E' : '#1D4ED8'
+                    }}
+                  >
+                    <span>{isUpcoming ? 'Launching Soon (Registry Pending)' : 'Explore Deeds'}</span>
+                    {!isUpcoming && <ArrowRight size={13} />}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

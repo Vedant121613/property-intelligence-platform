@@ -377,11 +377,19 @@ app.post('/api/user/unlock-deed', async (req, res) => {
     const cleanPhone = phone.replace(/\D/g, '').slice(-10);
     const userResult = await query('SELECT * FROM users WHERE phone = $1', [cleanPhone]);
 
+    let user;
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      const insertResult = await query(
+        `INSERT INTO users (phone, name, free_attempts_left, free_attempts_used, is_payment_done, selected_plan, unlocked_deeds)
+         VALUES ($1, $2, 3, 0, FALSE, 'none', '[]'::jsonb)
+         RETURNING *`,
+        [cleanPhone, `User ${cleanPhone.slice(-4)}`]
+      );
+      user = insertResult.rows[0];
+    } else {
+      user = userResult.rows[0];
     }
 
-    const user = userResult.rows[0];
     const unlockedDeeds = Array.isArray(user.unlocked_deeds) ? user.unlocked_deeds : [];
 
     // Already unlocked
@@ -497,7 +505,17 @@ app.post('/api/user/select-plan', async (req, res) => {
     );
 
     if (updateResult.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'User not found to update plan' });
+      const insertResult = await query(
+        `INSERT INTO users (phone, name, free_attempts_left, free_attempts_used, is_payment_done, selected_plan, plan_activated_at)
+         VALUES ($1, $2, 3, 0, $3, $4, NOW())
+         RETURNING *`,
+        [cleanPhone, `User ${cleanPhone.slice(-4)}`, isPaymentDone, planId]
+      );
+      return res.json({
+        success: true,
+        message: `Plan ${planId.toUpperCase()} activated successfully!`,
+        user: insertResult.rows[0]
+      });
     }
 
     res.json({

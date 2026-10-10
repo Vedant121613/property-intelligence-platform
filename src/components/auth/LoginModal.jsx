@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ShieldCheck, CheckCircle2, AlertCircle, Database } from 'lucide-react';
+import { X, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { sendOtp, verifyOtp, resendOtp } from '../../services/authService';
 import MobileInput from './MobileInput';

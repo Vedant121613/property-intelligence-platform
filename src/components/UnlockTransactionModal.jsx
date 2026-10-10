@@ -9,7 +9,8 @@ import {
   Sparkles, 
   CreditCard,
   RotateCcw,
-  AlertTriangle
+  AlertTriangle,
+  User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,6 +21,8 @@ export default function UnlockTransactionModal({
   onUnlockSuccess
 }) {
   const { 
+    user,
+    isAuthenticated,
     freeAttemptsLeft, 
     freeAttemptsUsed, 
     isPaymentDone, 
@@ -58,7 +61,7 @@ export default function UnlockTransactionModal({
     setIsProcessing(true);
     try {
       await selectPlan(chosenPlanId);
-      setPlanSuccessNotice(`Payment recorded in PostgreSQL! ${chosenPlanId.toUpperCase()} plan activated.`);
+      setPlanSuccessNotice(`${chosenPlanId.toUpperCase()} plan activated successfully!`);
       
       // Auto unlock deed after plan activation
       setTimeout(async () => {
@@ -130,11 +133,11 @@ export default function UnlockTransactionModal({
                 width: '40px', 
                 height: '40px', 
                 borderRadius: '10px', 
-                background: hasFreeAttempts ? '#FFF4EE' : '#FEE2E2', 
+                background: hasFreeAttempts ? '#EFF6FF' : '#FEE2E2', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
-                color: hasFreeAttempts ? '#F05A28' : '#EF4444'
+                color: hasFreeAttempts ? '#1D4ED8' : '#EF4444'
               }}
             >
               {hasFreeAttempts ? <Lock size={20} /> : <AlertTriangle size={20} />}
@@ -181,25 +184,63 @@ export default function UnlockTransactionModal({
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
               <span style={{ color: '#64748B' }}>Deed Amount:</span>
-              <span style={{ fontWeight: 800, color: '#F05A28', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ fontWeight: 800, color: '#1D4ED8', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Lock size={13} /> {transaction.displayAmount ? '••••••••••' : 'Locked'}
               </span>
             </div>
           </div>
 
-          {/* CASE 1: USER HAS FREE ATTEMPTS (3, 2, or 1 Left) */}
-          {hasFreeAttempts && !isPaymentDone && (
-            <>
-              {/* Attempt Counter Meter Banner */}
+          {/* USER NOT LOGGED IN: ONLY LOGGED IN USERS CAN VIEW/USE ATTEMPTS */}
+          {(!isAuthenticated || !user) ? (
+            <div style={{ textAlign: 'center', padding: '16px 8px 8px' }}>
               <div 
                 style={{
-                  background: '#ECFDF5',
-                  border: '1px solid #A7F3D0',
-                  borderRadius: '10px',
-                  padding: '14px 16px',
-                  marginBottom: '18px'
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  background: '#EFF6FF',
+                  color: '#1D4ED8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px'
                 }}
               >
+                <User size={28} />
+              </div>
+              <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1E293B', marginBottom: '8px' }}>
+                Sign In to Unlock Deed Records
+              </h4>
+              <p style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '22px', lineHeight: '1.5' }}>
+                Every verified Pureframe account receives <strong>3 free deed valuations</strong>. Sign in or register to access and track your free attempts.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  window.location.href = '/signin';
+                }}
+                className="hero-search-btn"
+                style={{ width: '100%', padding: '12px', fontSize: '0.925rem' }}
+              >
+                Sign In to Access 3 Free Attempts
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* CASE 1: USER HAS FREE ATTEMPTS (3, 2, or 1 Left) */}
+              {hasFreeAttempts && !isPaymentDone && (
+                <>
+                  {/* Attempt Counter Meter Banner */}
+                  <div 
+                    style={{
+                      background: '#ECFDF5',
+                      border: '1px solid #A7F3D0',
+                      borderRadius: '10px',
+                      padding: '14px 16px',
+                      marginBottom: '18px'
+                    }}
+                  >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#065F46', fontWeight: 700, fontSize: '0.875rem' }}>
                     <ShieldCheck size={18} />
@@ -231,7 +272,7 @@ export default function UnlockTransactionModal({
                 </div>
 
                 <p style={{ fontSize: '0.775rem', color: '#047857', marginTop: '6px' }}>
-                  Pureframe provides 3 free deed valuations verified from the local PostgreSQL registry. After 3 unlocks, choose an affordable subscription plan.
+                  Pureframe provides 3 complimentary deed valuations verified from authentic government registry records. After 3 unlocks, choose an affordable subscription plan.
                 </p>
               </div>
 
@@ -252,7 +293,7 @@ export default function UnlockTransactionModal({
                   type="checkbox"
                   checked={agreedToTerms}
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  style={{ width: '18px', height: '18px', accentColor: '#F05A28', cursor: 'pointer' }}
+                  style={{ width: '18px', height: '18px', accentColor: '#1D4ED8', cursor: 'pointer' }}
                 />
                 <span>
                   I agree to use <strong>1 of my {freeAttemptsLeft} free attempts</strong> to unlock this deed valuation
@@ -326,7 +367,7 @@ export default function UnlockTransactionModal({
                   fontSize: '0.85rem'
                 }}
               >
-                <strong>Free trial limit reached:</strong> You have unlocked 3 deeds. To view this transaction record and all future registries, select a plan below. Payment status is saved directly in PostgreSQL.
+                <strong>Free trial limit reached:</strong> You have unlocked 3 deeds. To view this transaction record and access all future registries, select a plan below.
               </div>
 
               {planSuccessNotice && (
@@ -344,8 +385,8 @@ export default function UnlockTransactionModal({
                       key={plan.id}
                       onClick={() => setChosenPlanId(plan.id)}
                       style={{
-                        border: isSelected ? '2px solid #F05A28' : '1px solid #E2E8F0',
-                        background: isSelected ? '#FFF7ED' : '#FFFFFF',
+                        border: isSelected ? '2px solid #1D4ED8' : '1px solid #E2E8F0',
+                        background: isSelected ? '#EFF6FF' : '#FFFFFF',
                         borderRadius: '10px',
                         padding: '12px 16px',
                         cursor: 'pointer',
@@ -361,7 +402,7 @@ export default function UnlockTransactionModal({
                           name="plan_choice"
                           checked={isSelected}
                           onChange={() => setChosenPlanId(plan.id)}
-                          style={{ accentColor: '#F05A28', width: '16px', height: '16px' }}
+                          style={{ accentColor: '#1D4ED8', width: '16px', height: '16px' }}
                         />
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -369,7 +410,7 @@ export default function UnlockTransactionModal({
                               {plan.name}
                             </span>
                             {plan.badge && (
-                              <span style={{ background: '#EA580C', color: '#fff', fontSize: '0.65rem', fontWeight: 800, padding: '1px 6px', borderRadius: '4px' }}>
+                              <span style={{ background: '#1D4ED8', color: '#fff', fontSize: '0.65rem', fontWeight: 800, padding: '1px 6px', borderRadius: '4px' }}>
                                 {plan.badge}
                               </span>
                             )}
@@ -409,12 +450,14 @@ export default function UnlockTransactionModal({
               >
                 <CreditCard size={18} />
                 <span>
-                  {isProcessing ? 'Recording in PostgreSQL...' : `Select ${chosenPlanId.toUpperCase()} & Unlock Deed`}
+                  {isProcessing ? 'Activating Plan...' : `Select ${chosenPlanId.toUpperCase()} & Unlock Deed`}
                 </span>
                 <ArrowRight size={18} />
               </button>
             </div>
           )}
+        </>
+      )}
 
         </div>
       </div>

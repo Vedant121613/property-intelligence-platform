@@ -31,7 +31,7 @@ function AppContent() {
     } else if (path.startsWith('/transactions')) {
       return {
         page: 'transactions',
-        params: { projectId: 'y-square', cityId: 'mumbai' }
+        params: { projectId: 'heera-solitaire', cityId: 'pune' }
       };
     } else if (path.startsWith('/project/')) {
       const parts = path.split('/').filter(Boolean);
@@ -66,7 +66,7 @@ function AppContent() {
     };
   });
 
-  const [currentCity, setCurrentCity] = useState(route.params.cityId || 'mumbai');
+  const [currentCity, setCurrentCity] = useState(route.params?.cityId || 'pune');
 
   const navigateTo = (page, params = {}) => {
     setRoute({ page, params });
@@ -125,6 +125,7 @@ function AppContent() {
         <Navbar
           currentCity={currentCity}
           onSelectCity={(cityId) => {
+            if (cityId === 'mumbai') return;
             setCurrentCity(cityId);
             if (route.page === 'city') {
               navigateTo('city', { cityId });
@@ -147,7 +148,10 @@ function AppContent() {
         {route.page === 'home' && (
           <HomePage
             currentCity={currentCity}
-            onSelectCity={setCurrentCity}
+            onSelectCity={(cityId) => {
+              if (cityId === 'mumbai') return;
+              setCurrentCity(cityId);
+            }}
             onNavigate={navigateTo}
           />
         )}
@@ -193,6 +197,9 @@ function AppContent() {
             cityId={route.params.cityId || currentCity}
             localityId={route.params.localityId || 'saswad-road'}
             projectId={route.params.projectId || 'heera-solitaire'}
+            talukaId={route.params.talukaId}
+            villageName={route.params.villageName}
+            talukaName={route.params.talukaName}
             onNavigate={navigateTo}
           />
         )}

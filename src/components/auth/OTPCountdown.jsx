@@ -1,5 +1,4 @@
 import React from 'react';
-import { MessageSquare } from 'lucide-react';
 
 export default function OTPCountdown({ 
   timerSeconds, 
@@ -18,45 +17,20 @@ export default function OTPCountdown({
         )}
       </div>
 
-      <div className="auth-resend-prompt" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>Didn't receive the code?</span>
-          <button 
-            type="button"
-            className="auth-resend-btn"
-            disabled={timerSeconds > 0 || isResending}
-            onClick={() => onResend('11')}
-            style={{
-              opacity: timerSeconds > 0 ? 0.5 : 1,
-              cursor: timerSeconds > 0 ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {isResending && resendChannel === '11' ? 'Resending...' : 'Resend SMS'}
-          </button>
-        </div>
-
-        {/* WhatsApp Retry Option */}
-        <div style={{ display: 'flex', gap: '10px', fontSize: '0.78rem' }}>
-          <button
-            type="button"
-            onClick={() => onResend('12')}
-            disabled={timerSeconds > 0 || isResending}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: timerSeconds > 0 ? '#94A3B8' : '#25D366',
-              fontWeight: 600,
-              cursor: timerSeconds > 0 ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              opacity: timerSeconds > 0 ? 0.6 : 1
-            }}
-          >
-            <MessageSquare size={13} />
-            <span>{isResending && resendChannel === '12' ? 'Sending via WhatsApp...' : 'Send via WhatsApp'}</span>
-          </button>
-        </div>
+      <div className="auth-resend-prompt" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+        <span>Didn't receive the code?</span>
+        <button 
+          type="button"
+          className="auth-resend-btn"
+          disabled={timerSeconds > 0 || isResending}
+          onClick={() => onResend('11')}
+          style={{
+            opacity: timerSeconds > 0 ? 0.5 : 1,
+            cursor: timerSeconds > 0 ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {isResending && resendChannel === '11' ? 'Resending...' : 'Resend Code'}
+        </button>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import HeroBanner from '../components/HeroBanner';
 import ProjectCard from '../components/ProjectCard';
-import FAQAccordion from '../components/FAQAccordion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getLocalityProjects } from '../services/propertyService';
 
@@ -99,9 +98,6 @@ export default function LocalityPage({
               <ChevronRight size={16} />
             </button>
           </div>
-
-          {/* Frequently Asked Questions */}
-          <FAQAccordion faqs={data.faqs} />
         </div>
       </main>
     </div>

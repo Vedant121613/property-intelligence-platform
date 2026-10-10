@@ -61,8 +61,6 @@ export default function Footer({ onNavigate }) {
             <div className="footer-column">
               <h3>Company</h3>
               <ul>
-                <li><a href="#blogs" onClick={(e) => { e.preventDefault(); }}>Blogs</a></li>
-                <li><a href="#faqs" onClick={(e) => { e.preventDefault(); }}>FAQs</a></li>
                 <li><a href="#about" onClick={(e) => { e.preventDefault(); }}>About Us</a></li>
                 <li><a href="#privacy" onClick={(e) => { e.preventDefault(); }}>Privacy Policy</a></li>
                 <li><a href="#terms" onClick={(e) => { e.preventDefault(); }}>Terms of Use</a></li>

@@ -4,59 +4,39 @@ import {
   dbPhoneLogin, 
   dbUnlockDeed, 
   dbSelectPlan, 
-  dbResetAttempts 
+  dbResetAttempts,
+  getLocalUserByPhone,
+  saveLocalUserByPhone
 } from '../services/dbService';
 
 const AuthContext = createContext(null);
 
-const DEFAULT_USER = {
-  id: 'usr_8921',
-  name: 'Vedant Sharma',
-  email: 'vedant.sharma@pureframe.io',
-  phone: '+91 91722 72519',
-  rawPhone: '9172272519',
-  city: 'Mumbai',
-  role: 'Property Investor & Home Buyer',
-  avatar: 'VS',
-  free_attempts_left: 3,
-  free_attempts_used: 0,
-  is_payment_done: false,
-  selected_plan: 'none',
-  joinedDate: 'January 2026',
-  verifiedBadge: true,
-  emailNotifications: true,
-  smsAlerts: true
-};
-
-const DEFAULT_UNLOCKED = ['11089052'];
-const DEFAULT_SAVED = ['y-square', 'heera-solitaire'];
-const DEFAULT_ORDERS = [
-  {
-    id: 'PF-ORD-8841',
-    projectName: 'Y Square',
-    unitNo: '512',
-    locality: 'Thane West, Mumbai',
-    price: 'Rs. 699',
-    status: 'Ready to Download',
-    date: '04 Oct 2026',
-    downloadUrl: '#'
-  }
-];
+const DEFAULT_UNLOCKED = [];
+const DEFAULT_SAVED = ['heera-solitaire'];
+const DEFAULT_ORDERS = [];
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('pureframe_user');
-      return saved ? JSON.parse(saved) : DEFAULT_USER;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.name === 'Vedant Sharma' || parsed?.id === 'usr_8921') {
+          localStorage.removeItem('pureframe_user');
+          return null;
+        }
+        return parsed;
+      }
+      return null;
     } catch {
-      return DEFAULT_USER;
+      return null;
     }
   });
 
   const [freeAttemptsLeft, setFreeAttemptsLeft] = useState(() => {
     try {
       const saved = localStorage.getItem('pureframe_free_attempts');
-      return saved !== null ? parseInt(saved, 10) : (user?.free_attempts_left ?? 3);
+      return saved !== null ? parseInt(saved, 10) : 3;
     } catch {
       return 3;
     }
@@ -153,10 +133,18 @@ export function AuthProvider({ children }) {
     localStorage.setItem('pureframe_selected_plan', selectedPlan);
   }, [selectedPlan]);
 
-  // Synchronize user from PostgreSQL on startup
+  // Synchronize user from PostgreSQL and local registry on startup
   useEffect(() => {
     if (user?.rawPhone || user?.phone) {
-      const phone = user.rawPhone || user.phone;
+      const phone = (user.rawPhone || user.phone || '').replace(/\D/g, '').slice(-10);
+      const local = getLocalUserByPhone(phone);
+      if (local) {
+        if (local.free_attempts_left !== undefined) setFreeAttemptsLeft(local.free_attempts_left);
+        if (local.free_attempts_used !== undefined) setFreeAttemptsUsed(local.free_attempts_used);
+        if (local.is_payment_done !== undefined) setIsPaymentDone(Boolean(local.is_payment_done));
+        if (local.selected_plan) setSelectedPlan(local.selected_plan);
+        if (Array.isArray(local.unlocked_deeds)) setUnlockedTxns(local.unlocked_deeds);
+      }
       getDbUser(phone).then(dbU => {
         if (dbU) {
           if (dbU.free_attempts_left !== undefined) setFreeAttemptsLeft(dbU.free_attempts_left);
@@ -170,9 +158,23 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = (emailOrPhone, password) => {
-    const formattedName = emailOrPhone.includes('@')
-      ? emailOrPhone.split('@')[0].replace('.', ' ')
-      : 'Investor User';
+    const isEmail = (emailOrPhone || '').includes('@');
+    const cleanPhone = !isEmail ? (emailOrPhone || '').replace(/\D/g, '').slice(-10) : '';
+    const phoneToUse = cleanPhone || '9820012345';
+    const formattedPhone = `+91 ${phoneToUse.slice(0, 5)} ${phoneToUse.slice(5)}`;
+
+    // Immediately read from local per-phone registry so decremented attempts are restored!
+    const local = getLocalUserByPhone(phoneToUse) || {
+      phone: phoneToUse,
+      name: isEmail ? emailOrPhone.split('@')[0].replace('.', ' ') : `User ${phoneToUse.slice(-4)}`,
+      free_attempts_left: 3,
+      free_attempts_used: 0,
+      is_payment_done: false,
+      selected_plan: 'none',
+      unlocked_deeds: []
+    };
+
+    const formattedName = local.name || (isEmail ? emailOrPhone.split('@')[0].replace('.', ' ') : `User ${phoneToUse.slice(-4)}`);
     const initials = formattedName
       .split(' ')
       .map(n => n.charAt(0).toUpperCase())
@@ -180,19 +182,44 @@ export function AuthProvider({ children }) {
       .join('') || 'PF';
 
     const newUser = {
-      id: `usr_${Date.now()}`,
+      id: `usr_${phoneToUse}`,
       name: formattedName.charAt(0).toUpperCase() + formattedName.slice(1),
-      email: emailOrPhone.includes('@') ? emailOrPhone : 'user@pureframe.io',
-      phone: emailOrPhone.includes('@') ? '+91 98200 12345' : emailOrPhone,
-      city: 'Mumbai',
+      email: isEmail ? emailOrPhone : `${phoneToUse}@pureframe.io`,
+      phone: formattedPhone,
+      rawPhone: phoneToUse,
+      city: 'Pune',
       role: 'Home Buyer & Investor',
       avatar: initials,
+      free_attempts_left: local.free_attempts_left,
+      free_attempts_used: local.free_attempts_used,
+      is_payment_done: local.is_payment_done,
+      selected_plan: local.selected_plan,
+      unlocked_deeds: local.unlocked_deeds || [],
       joinedDate: 'October 2026',
       verifiedBadge: true,
       emailNotifications: true,
       smsAlerts: true
     };
+
+    saveLocalUserByPhone(phoneToUse, newUser);
     setUser(newUser);
+    setFreeAttemptsLeft(local.free_attempts_left);
+    setFreeAttemptsUsed(local.free_attempts_used);
+    setIsPaymentDone(local.is_payment_done);
+    setSelectedPlan(local.selected_plan);
+    setUnlockedTxns(local.unlocked_deeds || []);
+
+    // Also sync in background with PostgreSQL
+    dbPhoneLogin(phoneToUse, newUser.name).then(dbU => {
+      if (dbU) {
+        if (dbU.free_attempts_left !== undefined) setFreeAttemptsLeft(dbU.free_attempts_left);
+        if (dbU.free_attempts_used !== undefined) setFreeAttemptsUsed(dbU.free_attempts_used);
+        if (dbU.is_payment_done !== undefined) setIsPaymentDone(Boolean(dbU.is_payment_done));
+        if (dbU.selected_plan) setSelectedPlan(dbU.selected_plan);
+        if (Array.isArray(dbU.unlocked_deeds)) setUnlockedTxns(dbU.unlocked_deeds);
+      }
+    }).catch(() => {});
+
     return newUser;
   };
 
@@ -201,21 +228,36 @@ export function AuthProvider({ children }) {
     const formattedPhone = `+91 ${cleanNumber.slice(0, 5)} ${cleanNumber.slice(5)}`;
     const initials = cleanNumber ? `P${cleanNumber.slice(-1)}` : 'PF';
 
+    // 1. Immediately read existing attempts from local registry
+    const local = getLocalUserByPhone(cleanNumber);
+    const initialAttemptsLeft = local?.free_attempts_left !== undefined ? local.free_attempts_left : 3;
+    const initialAttemptsUsed = local?.free_attempts_used !== undefined ? local.free_attempts_used : (3 - initialAttemptsLeft);
+    const initialIsPaid = Boolean(local?.is_payment_done);
+    const initialPlan = local?.selected_plan || 'none';
+    const initialUnlocked = Array.isArray(local?.unlocked_deeds) ? local.unlocked_deeds : [];
+
     try {
       const dbUser = await dbPhoneLogin(cleanNumber, `User ${cleanNumber.slice(-4)}`);
+      const finalLeft = dbUser.free_attempts_left !== undefined ? dbUser.free_attempts_left : initialAttemptsLeft;
+      const finalUsed = dbUser.free_attempts_used !== undefined ? dbUser.free_attempts_used : initialAttemptsUsed;
+      const finalPaid = dbUser.is_payment_done !== undefined ? Boolean(dbUser.is_payment_done) : initialIsPaid;
+      const finalPlan = dbUser.selected_plan || initialPlan;
+      const finalUnlocked = Array.isArray(dbUser.unlocked_deeds) ? dbUser.unlocked_deeds : initialUnlocked;
+
       const fullUser = {
         id: `usr_${dbUser.id || cleanNumber}`,
         name: dbUser.name || `User ${cleanNumber.slice(-4)}`,
         email: `${cleanNumber}@pureframe.io`,
         phone: formattedPhone,
         rawPhone: cleanNumber,
-        city: 'Mumbai',
+        city: 'Pune',
         role: 'Verified Property Buyer',
         avatar: initials,
-        free_attempts_left: dbUser.free_attempts_left !== undefined ? dbUser.free_attempts_left : 3,
-        free_attempts_used: dbUser.free_attempts_used || 0,
-        is_payment_done: Boolean(dbUser.is_payment_done),
-        selected_plan: dbUser.selected_plan || 'none',
+        free_attempts_left: finalLeft,
+        free_attempts_used: finalUsed,
+        is_payment_done: finalPaid,
+        selected_plan: finalPlan,
+        unlocked_deeds: finalUnlocked,
         joinedDate: 'October 2026',
         verifiedBadge: true,
         emailNotifications: true,
@@ -223,13 +265,11 @@ export function AuthProvider({ children }) {
       };
 
       setUser(fullUser);
-      setFreeAttemptsLeft(fullUser.free_attempts_left);
-      setFreeAttemptsUsed(fullUser.free_attempts_used);
-      setIsPaymentDone(fullUser.is_payment_done);
-      setSelectedPlan(fullUser.selected_plan);
-      if (Array.isArray(dbUser.unlocked_deeds)) {
-        setUnlockedTxns(dbUser.unlocked_deeds);
-      }
+      setFreeAttemptsLeft(finalLeft);
+      setFreeAttemptsUsed(finalUsed);
+      setIsPaymentDone(finalPaid);
+      setSelectedPlan(finalPlan);
+      setUnlockedTxns(finalUnlocked);
       return fullUser;
     } catch {
       const fallback = {
@@ -238,115 +278,208 @@ export function AuthProvider({ children }) {
         email: `${cleanNumber || 'user'}@pureframe.io`,
         phone: formattedPhone,
         rawPhone: cleanNumber,
-        city: 'Mumbai',
+        city: 'Pune',
         role: 'Verified Property Buyer',
         avatar: initials,
-        free_attempts_left: 3,
-        free_attempts_used: 0,
-        is_payment_done: false,
-        selected_plan: 'none',
+        free_attempts_left: initialAttemptsLeft,
+        free_attempts_used: initialAttemptsUsed,
+        is_payment_done: initialIsPaid,
+        selected_plan: initialPlan,
+        unlocked_deeds: initialUnlocked,
         joinedDate: 'October 2026',
         verifiedBadge: true
       };
       setUser(fallback);
+      setFreeAttemptsLeft(initialAttemptsLeft);
+      setFreeAttemptsUsed(initialAttemptsUsed);
+      setIsPaymentDone(initialIsPaid);
+      setSelectedPlan(initialPlan);
+      setUnlockedTxns(initialUnlocked);
       return fallback;
     }
   };
 
-  const demoLogin = () => {
-    setUser(DEFAULT_USER);
-    setFreeAttemptsLeft(3);
-    setFreeAttemptsUsed(0);
-    setIsPaymentDone(false);
-    setSelectedPlan('none');
-    return DEFAULT_USER;
-  };
-
   const signup = ({ name, email, phone, city }) => {
-    const initials = name
+    const cleanNumber = (phone || '').replace(/\D/g, '').slice(-10) || '9820012345';
+    const formattedPhone = `+91 ${cleanNumber.slice(0, 5)} ${cleanNumber.slice(5)}`;
+    
+    // Check local registry
+    const local = getLocalUserByPhone(cleanNumber) || {
+      phone: cleanNumber,
+      name: name || `User ${cleanNumber.slice(-4)}`,
+      free_attempts_left: 3,
+      free_attempts_used: 0,
+      is_payment_done: false,
+      selected_plan: 'none',
+      unlocked_deeds: []
+    };
+
+    const initials = (name || 'PF')
       .split(' ')
       .map(n => n.charAt(0).toUpperCase())
       .slice(0, 2)
       .join('') || 'PF';
 
     const newUser = {
-      id: `usr_${Date.now()}`,
-      name,
-      email,
-      phone,
-      city: city || 'Mumbai',
+      id: `usr_${cleanNumber}`,
+      name: name || local.name,
+      email: email || `${cleanNumber}@pureframe.io`,
+      phone: formattedPhone,
+      rawPhone: cleanNumber,
+      city: city || 'Pune',
       role: 'Verified Property Buyer',
       avatar: initials,
+      free_attempts_left: local.free_attempts_left,
+      free_attempts_used: local.free_attempts_used,
+      is_payment_done: local.is_payment_done,
+      selected_plan: local.selected_plan,
+      unlocked_deeds: local.unlocked_deeds || [],
       joinedDate: 'October 2026',
       verifiedBadge: true,
       emailNotifications: true,
       smsAlerts: true
     };
+
+    saveLocalUserByPhone(cleanNumber, newUser);
     setUser(newUser);
+    setFreeAttemptsLeft(local.free_attempts_left);
+    setFreeAttemptsUsed(local.free_attempts_used);
+    setIsPaymentDone(local.is_payment_done);
+    setSelectedPlan(local.selected_plan);
+    setUnlockedTxns(local.unlocked_deeds || []);
+
+    dbPhoneLogin(cleanNumber, name).catch(() => {});
     return newUser;
   };
 
   const logout = () => {
     setUser(null);
+    setFreeAttemptsLeft(3);
+    setFreeAttemptsUsed(0);
+    setIsPaymentDone(false);
+    setSelectedPlan('none');
+    setUnlockedTxns([]);
+    localStorage.removeItem('pureframe_user');
+    localStorage.removeItem('pureframe_free_attempts');
+    localStorage.removeItem('pureframe_attempts_used');
+    localStorage.removeItem('pureframe_is_paid');
+    localStorage.removeItem('pureframe_selected_plan');
+    localStorage.removeItem('pureframe_unlocked_txns');
   };
 
   const updateProfile = (updatedFields) => {
     setUser(prev => {
       if (!prev) return null;
-      return { ...prev, ...updatedFields };
+      const updated = { ...prev, ...updatedFields };
+      if (updated.rawPhone) {
+        saveLocalUserByPhone(updated.rawPhone, updated);
+      }
+      return updated;
     });
   };
 
   const unlockTxn = async (txnId) => {
-    const phone = user?.rawPhone || user?.phone || '9172272519';
+    const txnStr = String(txnId);
+    const phone = user?.rawPhone || (user?.phone || '').replace(/\D/g, '').slice(-10) || '9820012345';
+    
     try {
-      const res = await dbUnlockDeed(phone, txnId);
-      if (res.unlocked || res.alreadyUnlocked) {
-        if (!unlockedTxns.includes(String(txnId))) {
-          setUnlockedTxns(prev => [...prev, String(txnId)]);
-        }
-        if (res.free_attempts_left !== undefined) {
-          setFreeAttemptsLeft(res.free_attempts_left);
-        }
-        if (res.free_attempts_used !== undefined) {
-          setFreeAttemptsUsed(res.free_attempts_used);
-        }
-        return { success: true, freeAttemptsLeft: res.free_attempts_left };
+      const res = await dbUnlockDeed(phone, txnStr);
+      if (res.unlocked || res.alreadyUnlocked || res.success) {
+        setUnlockedTxns(prev => {
+          if (!prev.includes(txnStr)) {
+            return [...prev, txnStr];
+          }
+          return prev;
+        });
+
+        const newLeft = res.free_attempts_left !== undefined 
+          ? res.free_attempts_left 
+          : (isPaymentDone ? freeAttemptsLeft : Math.max(0, freeAttemptsLeft - 1));
+        const newUsed = res.free_attempts_used !== undefined 
+          ? res.free_attempts_used 
+          : (isPaymentDone ? freeAttemptsUsed : freeAttemptsUsed + 1);
+
+        setFreeAttemptsLeft(newLeft);
+        setFreeAttemptsUsed(newUsed);
+
+        setUser(prev => {
+          if (!prev) return prev;
+          const deeds = Array.from(new Set([...(prev.unlocked_deeds || []), txnStr]));
+          return {
+            ...prev,
+            free_attempts_left: newLeft,
+            free_attempts_used: newUsed,
+            unlocked_deeds: deeds
+          };
+        });
+
+        return { 
+          success: true, 
+          unlocked: true, 
+          freeAttemptsLeft: newLeft,
+          freeAttemptsUsed: newUsed 
+        };
       } else if (res.limitReached) {
         setFreeAttemptsLeft(0);
         return { success: false, limitReached: true, message: res.message };
       }
       return res;
-    } catch {
+    } catch (err) {
       if (freeAttemptsLeft > 0 || isPaymentDone) {
-        setUnlockedTxns(prev => [...prev, String(txnId)]);
-        if (!isPaymentDone) {
-          setFreeAttemptsLeft(p => Math.max(0, p - 1));
-          setFreeAttemptsUsed(p => p + 1);
-        }
-        return { success: true, freeAttemptsLeft: Math.max(0, freeAttemptsLeft - 1) };
+        setUnlockedTxns(prev => [...prev, txnStr]);
+        const newLeft = !isPaymentDone ? Math.max(0, freeAttemptsLeft - 1) : freeAttemptsLeft;
+        const newUsed = !isPaymentDone ? freeAttemptsUsed + 1 : freeAttemptsUsed;
+        setFreeAttemptsLeft(newLeft);
+        setFreeAttemptsUsed(newUsed);
+        saveLocalUserByPhone(phone, {
+          free_attempts_left: newLeft,
+          free_attempts_used: newUsed,
+          unlocked_deeds: [...unlockedTxns, txnStr]
+        });
+        return { success: true, unlocked: true, freeAttemptsLeft: newLeft };
       }
       return { success: false, limitReached: true };
     }
   };
 
   const selectPlan = async (planId) => {
-    const phone = user?.rawPhone || user?.phone || '9172272519';
+    setIsPaymentDone(true);
+    setSelectedPlan(planId);
+    if (user) {
+      setUser(prev => ({ ...prev, is_payment_done: true, selected_plan: planId }));
+    } else {
+      const subscriberUser = {
+        id: `usr_${Date.now()}`,
+        name: 'Pro Subscriber',
+        email: 'subscriber@pureframe.io',
+        phone: '+91 91722 72519',
+        rawPhone: '9172272519',
+        city: 'Pune',
+        role: 'Verified Pro Investor',
+        avatar: 'PS',
+        free_attempts_left: 3,
+        free_attempts_used: 0,
+        is_payment_done: true,
+        selected_plan: planId,
+        joinedDate: 'October 2026',
+        verifiedBadge: true,
+        emailNotifications: true,
+        smsAlerts: true
+      };
+      setUser(subscriberUser);
+    }
+
+    const phone = user?.rawPhone || (user?.phone || '').replace(/\D/g, '').slice(-10) || '9172272519';
     try {
       const res = await dbSelectPlan(phone, planId);
-      setIsPaymentDone(true);
-      setSelectedPlan(planId);
-      setUser(prev => prev ? ({ ...prev, is_payment_done: true, selected_plan: planId }) : prev);
       return res;
     } catch {
-      setIsPaymentDone(true);
-      setSelectedPlan(planId);
       return { success: true };
     }
   };
 
   const resetAttempts = async () => {
-    const phone = user?.rawPhone || user?.phone || '9172272519';
+    const phone = user?.rawPhone || (user?.phone || '').replace(/\D/g, '').slice(-10) || '9172272519';
     try {
       await dbResetAttempts(phone);
     } catch {}
@@ -397,7 +530,6 @@ export function AuthProvider({ children }) {
         isAuthenticated: Boolean(user),
         login,
         loginWithPhoneOtp,
-        demoLogin,
         signup,
         logout,
         updateProfile,

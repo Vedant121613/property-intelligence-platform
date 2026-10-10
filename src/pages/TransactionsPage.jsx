@@ -78,12 +78,12 @@ export default function TransactionsPage({
 
   return (
     <div>
-      {/* Yellow Promotion Bar (Screenshot 4) */}
+      {/* Trust Promotion Bar */}
       <div className="yellow-promo-bar">
         <span className="yellow-promo-badge">NEW</span>
-        <span style={{ color: '#EA580C', fontWeight: 700 }}>✦ AI POWERED</span>
+        <span style={{ color: '#1D4ED8', fontWeight: 700 }}>✦ AI POWERED</span>
         <span>Search by Property Address</span>
-        <ChevronRight size={14} color="#EA580C" />
+        <ChevronRight size={14} color="#1D4ED8" />
       </div>
 
       <div className="content-wrapper" style={{ padding: '24px 24px 48px' }}>
@@ -108,8 +108,8 @@ export default function TransactionsPage({
                 width: '46px',
                 height: '46px',
                 borderRadius: '10px',
-                background: '#FFF3EB',
-                color: '#CF5C36',
+                background: '#EFF6FF',
+                color: '#1D4ED8',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -130,9 +130,9 @@ export default function TransactionsPage({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
-                    border: '1px solid #FED7AA',
-                    background: '#FFF7ED',
-                    color: '#C2410C',
+                    border: '1px solid #BFDBFE',
+                    background: '#EFF6FF',
+                    color: '#1E40AF',
                     padding: '3px 8px',
                     borderRadius: '6px',
                     fontSize: '0.75rem',
@@ -191,7 +191,7 @@ export default function TransactionsPage({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                color: '#EA580C',
+                color: '#1D4ED8',
                 fontSize: '0.85rem',
                 fontWeight: 700
               }}
@@ -311,7 +311,7 @@ export default function TransactionsPage({
                     name="txtype" 
                     checked={txTypeFilter === 'all' || txTypeFilter === 'sale'}
                     onChange={() => setTxTypeFilter('sale')}
-                    style={{ accentColor: '#CF5C36' }}
+                    style={{ accentColor: '#1D4ED8' }}
                   />
                   <span>Sale</span>
                 </label>
@@ -321,7 +321,7 @@ export default function TransactionsPage({
                     name="txtype" 
                     checked={txTypeFilter === 'rent'}
                     onChange={() => setTxTypeFilter('rent')}
-                    style={{ accentColor: '#CF5C36' }}
+                    style={{ accentColor: '#1D4ED8' }}
                   />
                   <span>Rent</span>
                 </label>
@@ -331,7 +331,7 @@ export default function TransactionsPage({
                     name="txtype" 
                     checked={txTypeFilter === 'mortgage'}
                     onChange={() => setTxTypeFilter('mortgage')}
-                    style={{ accentColor: '#CF5C36' }}
+                    style={{ accentColor: '#1D4ED8' }}
                   />
                   <span>Mortgage</span>
                 </label>

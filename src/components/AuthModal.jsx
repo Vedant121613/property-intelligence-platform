@@ -26,7 +26,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'signin', onSu
   const [signUpName, setSignUpName] = useState('');
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPhone, setSignUpPhone] = useState('');
-  const [signUpCity, setSignUpCity] = useState('mumbai');
+  const [signUpCity, setSignUpCity] = useState('pune');
 
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -101,7 +101,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'signin', onSu
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <span 
               style={{
-                background: 'linear-gradient(135deg, #F05A28 0%, #EA580C 100%)',
+                background: 'var(--brand-gradient)',
                 color: '#fff',
                 fontSize: '0.7rem',
                 fontWeight: 800,
@@ -136,8 +136,8 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'signin', onSu
               padding: '12px',
               fontSize: '0.875rem',
               fontWeight: 700,
-              color: activeTab === 'signin' ? '#F05A28' : '#64748B',
-              borderBottom: activeTab === 'signin' ? '2px solid #F05A28' : '2px solid transparent',
+              color: activeTab === 'signin' ? '#1D4ED8' : '#64748B',
+              borderBottom: activeTab === 'signin' ? '2px solid #1D4ED8' : '2px solid transparent',
               background: activeTab === 'signin' ? '#FFFFFF' : 'transparent',
               transition: 'all 0.15s'
             }}
@@ -152,8 +152,8 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'signin', onSu
               padding: '12px',
               fontSize: '0.875rem',
               fontWeight: 700,
-              color: activeTab === 'signup' ? '#F05A28' : '#64748B',
-              borderBottom: activeTab === 'signup' ? '2px solid #F05A28' : '2px solid transparent',
+              color: activeTab === 'signup' ? '#1D4ED8' : '#64748B',
+              borderBottom: activeTab === 'signup' ? '2px solid #1D4ED8' : '2px solid transparent',
               background: activeTab === 'signup' ? '#FFFFFF' : 'transparent',
               transition: 'all 0.15s'
             }}
@@ -232,7 +232,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'signin', onSu
                 type="submit"
                 style={{
                   marginTop: '10px',
-                  background: 'linear-gradient(135deg, #F05A28 0%, #EA580C 100%)',
+                  background: 'var(--brand-gradient)',
                   color: '#FFFFFF',
                   padding: '12px',
                   borderRadius: '8px',
@@ -242,7 +242,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'signin', onSu
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  boxShadow: '0 4px 12px rgba(240, 90, 40, 0.3)'
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)'
                 }}
               >
                 <span>Sign In to Pureframe</span>
@@ -325,7 +325,10 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'signin', onSu
                   <MapPin size={16} color="#94A3B8" style={{ position: 'absolute', left: '12px' }} />
                   <select
                     value={signUpCity}
-                    onChange={(e) => setSignUpCity(e.target.value)}
+                    onChange={(e) => {
+                      if (e.target.value === 'mumbai') return;
+                      setSignUpCity(e.target.value);
+                    }}
                     style={{
                       width: '100%',
                       padding: '9px 12px 9px 36px',
@@ -336,7 +339,9 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'signin', onSu
                     }}
                   >
                     {CITIES.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
+                      <option key={c.id} value={c.id} disabled={c.isUpcoming}>
+                        {c.name} {c.isUpcoming ? '(Upcoming - Unavailable)' : '(Live)'}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -346,7 +351,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'signin', onSu
                 type="submit"
                 style={{
                   marginTop: '10px',
-                  background: 'linear-gradient(135deg, #F05A28 0%, #EA580C 100%)',
+                  background: 'var(--brand-gradient)',
                   color: '#FFFFFF',
                   padding: '12px',
                   borderRadius: '8px',
@@ -356,7 +361,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'signin', onSu
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  boxShadow: '0 4px 12px rgba(240, 90, 40, 0.3)'
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)'
                 }}
               >
                 <span>Create Pureframe Account</span>

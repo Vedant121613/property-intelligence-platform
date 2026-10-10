@@ -10,14 +10,13 @@ import CityPage from './pages/CityPage';
 import LocalityPage from './pages/LocalityPage';
 import ProjectPage from './pages/ProjectPage';
 import ProfilePage from './pages/ProfilePage';
-import AuthPage from './pages/AuthPage';
 import PlansPage from './pages/PlansPage';
 
 function AppContent() {
   const [route, setRoute] = useState(() => {
     const path = window.location.pathname;
     if (path.startsWith('/signin') || path.startsWith('/signup') || path.startsWith('/login')) {
-      return { page: 'signin', params: {} };
+      return { page: 'home', params: {} };
     } else if (path.startsWith('/plans')) {
       return { page: 'plans', params: {} };
     } else if (path.startsWith('/profile')) {
@@ -75,10 +74,9 @@ function AppContent() {
     }
 
     let targetUrl = '/';
-    if (page === 'home') {
+    if (page === 'home' || page === 'signin' || page === 'signup') {
+      page = 'home';
       targetUrl = '/';
-    } else if (page === 'signin' || page === 'signup') {
-      targetUrl = '/signin';
     } else if (page === 'plans') {
       targetUrl = '/plans';
     } else if (page === 'profile') {
@@ -120,27 +118,21 @@ function AppContent() {
 
   return (
     <div className="app-container">
-      {/* Top Persistent Navbar (Hidden on clean Auth page matching screenshot) */}
-      {route.page !== 'signin' && (
-        <Navbar
-          currentCity={currentCity}
-          onSelectCity={(cityId) => {
-            if (cityId === 'mumbai') return;
-            setCurrentCity(cityId);
-            if (route.page === 'city') {
-              navigateTo('city', { cityId });
-            }
-          }}
-          onNavigate={navigateTo}
-        />
-      )}
+      {/* Top Persistent Navbar */}
+      <Navbar
+        currentCity={currentCity}
+        onSelectCity={(cityId) => {
+          if (cityId === 'mumbai') return;
+          setCurrentCity(cityId);
+          if (route.page === 'city') {
+            navigateTo('city', { cityId });
+          }
+        }}
+        onNavigate={navigateTo}
+      />
 
       {/* Main Page View */}
       <main className="main-content">
-        {route.page === 'signin' && (
-          <AuthPage onNavigate={navigateTo} />
-        )}
-
         {route.page === 'plans' && (
           <PlansPage onNavigate={navigateTo} />
         )}
@@ -205,8 +197,8 @@ function AppContent() {
         )}
       </main>
 
-      {/* Global Footer (Omitted on dedicated Auth page) */}
-      {route.page !== 'signin' && <Footer onNavigate={navigateTo} />}
+      {/* Global Footer */}
+      <Footer onNavigate={navigateTo} />
 
       {/* Floating Chat Assistant */}
       <ChatWidget />

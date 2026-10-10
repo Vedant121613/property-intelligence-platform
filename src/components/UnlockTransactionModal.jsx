@@ -190,45 +190,7 @@ export default function UnlockTransactionModal({
             </div>
           </div>
 
-          {/* USER NOT LOGGED IN: ONLY LOGGED IN USERS CAN VIEW/USE ATTEMPTS */}
-          {(!isAuthenticated || !user) ? (
-            <div style={{ textAlign: 'center', padding: '16px 8px 8px' }}>
-              <div 
-                style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  background: '#EFF6FF',
-                  color: '#1D4ED8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 16px'
-                }}
-              >
-                <User size={28} />
-              </div>
-              <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1E293B', marginBottom: '8px' }}>
-                Sign In to Unlock Deed Records
-              </h4>
-              <p style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '22px', lineHeight: '1.5' }}>
-                Every verified Pureframe account receives <strong>3 free deed valuations</strong>. Sign in or register to access and track your free attempts.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  window.location.href = '/signin';
-                }}
-                className="hero-search-btn"
-                style={{ width: '100%', padding: '12px', fontSize: '0.925rem' }}
-              >
-                Sign In to Access 3 Free Attempts
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* CASE 1: USER HAS FREE ATTEMPTS (3, 2, or 1 Left) */}
+          {/* CASE 1: USER HAS FREE ATTEMPTS (3, 2, or 1 Left) */}
               {hasFreeAttempts && !isPaymentDone && (
                 <>
                   {/* Attempt Counter Meter Banner */}
@@ -456,8 +418,6 @@ export default function UnlockTransactionModal({
               </button>
             </div>
           )}
-        </>
-      )}
 
         </div>
       </div>

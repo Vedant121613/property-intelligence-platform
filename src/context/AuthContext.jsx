@@ -15,6 +15,26 @@ const DEFAULT_UNLOCKED = [];
 const DEFAULT_SAVED = ['heera-solitaire'];
 const DEFAULT_ORDERS = [];
 
+export const DEFAULT_USER = {
+  id: 'usr_member',
+  name: 'User',
+  email: 'user@pureframe.io',
+  phone: '+91 98200 12345',
+  rawPhone: '9820012345',
+  city: 'Pune',
+  role: 'Home Buyer & Investor',
+  avatar: 'PF',
+  free_attempts_left: 3,
+  free_attempts_used: 0,
+  is_payment_done: false,
+  selected_plan: 'none',
+  unlocked_deeds: [],
+  joinedDate: 'October 2026',
+  verifiedBadge: true,
+  emailNotifications: true,
+  smsAlerts: true
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
@@ -22,14 +42,13 @@ export function AuthProvider({ children }) {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed?.name === 'Vedant Sharma' || parsed?.id === 'usr_8921') {
-          localStorage.removeItem('pureframe_user');
-          return null;
+          return DEFAULT_USER;
         }
-        return parsed;
+        return parsed || DEFAULT_USER;
       }
-      return null;
+      return DEFAULT_USER;
     } catch {
-      return null;
+      return DEFAULT_USER;
     }
   });
 
@@ -353,7 +372,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    setUser(null);
+    setUser(DEFAULT_USER);
     setFreeAttemptsLeft(3);
     setFreeAttemptsUsed(0);
     setIsPaymentDone(false);
@@ -527,7 +546,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: Boolean(user),
+        isAuthenticated: true,
         login,
         loginWithPhoneOtp,
         signup,

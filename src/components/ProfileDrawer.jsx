@@ -198,43 +198,23 @@ export default function ProfileDrawer({
 
         {/* Bottom Drawer Footer */}
         <div style={{ padding: '16px 20px', borderTop: '1px solid #F1F5F9', background: '#F8FAFC' }}>
-          {isAuthenticated ? (
-            <button
-              type="button"
-              onClick={() => { logout(); onClose(); onNavigate('home'); }}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                color: '#EF4444',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                padding: '8px 0'
-              }}
-            >
-              <LogOut size={16} />
-              <span>Sign Out</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => { onClose(); onNavigate('signin'); }}
-              className="hero-search-btn"
-              style={{
-                width: '100%',
-                padding: '10px',
-                fontSize: '0.85rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              <LogIn size={16} />
-              <span>Sign In / Register</span>
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => { onClose(); onNavigate('profile'); }}
+            className="hero-search-btn"
+            style={{
+              width: '100%',
+              padding: '10px',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            <User size={16} />
+            <span>View Full Profile</span>
+          </button>
         </div>
       </div>
     </div>

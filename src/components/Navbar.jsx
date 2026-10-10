@@ -18,7 +18,6 @@ import {
 import { CITIES } from '../data/mockData';
 import { searchProperties } from '../services/propertyService';
 import { useAuth } from '../context/AuthContext';
-import AuthModal from './AuthModal';
 import ProfileDrawer from './ProfileDrawer';
 
 export default function Navbar({ 
@@ -35,7 +34,6 @@ export default function Navbar({
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showProfileDrawer, setShowProfileDrawer] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   
   const searchRef = useRef(null);
   const cityRef = useRef(null);
@@ -319,65 +317,43 @@ export default function Navbar({
             </button>
             
             {/* User Profile Avatar Button (Opens Slide-over Drawer - Screenshot 4) */}
-            {isAuthenticated && user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {/* 3 of 3 Attempts Tracker - ONLY VISIBLE IF LOGGED IN */}
-                <div 
-                  onClick={() => onNavigate('profile')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    background: isPaymentDone ? '#EFF6FF' : '#ECFDF5',
-                    border: isPaymentDone ? '1px solid #BFDBFE' : '1px solid #A7F3D0',
-                    color: isPaymentDone ? '#1D4ED8' : '#047857',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    padding: '4px 10px',
-                    borderRadius: '20px',
-                    cursor: 'pointer'
-                  }}
-                  title={isPaymentDone ? 'Pro Member' : `${freeAttemptsLeft} of 3 Free Attempts remaining`}
-                >
-                  <ShieldCheck size={13} />
-                  <span>{isPaymentDone ? 'PRO' : `${freeAttemptsLeft}/3 Free`}</span>
-                </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {/* 3 of 3 Attempts Tracker */}
+              <div 
+                onClick={() => onNavigate('profile')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  background: isPaymentDone ? '#EFF6FF' : '#ECFDF5',
+                  border: isPaymentDone ? '1px solid #BFDBFE' : '1px solid #A7F3D0',
+                  color: isPaymentDone ? '#1D4ED8' : '#047857',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  padding: '4px 10px',
+                  borderRadius: '20px',
+                  cursor: 'pointer'
+                }}
+                title={isPaymentDone ? 'Pro Member' : `${freeAttemptsLeft} of 3 Free Attempts remaining`}
+              >
+                <ShieldCheck size={13} />
+                <span>{isPaymentDone ? 'PRO' : `${freeAttemptsLeft}/3 Free`}</span>
+              </div>
 
-                <button 
-                  type="button" 
-                  className="user-profile-chip-btn"
-                  onClick={() => setShowProfileDrawer(true)}
-                  aria-label="User profile drawer"
-                  title="Open User Profile"
-                >
-                  <div className="user-avatar-btn">
-                    {user.avatar || 'PF'}
-                  </div>
-                  <span className="user-profile-chip-name">{user.name.split(' ')[0]}</span>
-                  <ChevronDown size={14} color="#64748B" />
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button
-                  type="button"
-                  className="user-avatar-btn"
-                  style={{ cursor: 'pointer', border: 'none' }}
-                  onClick={() => setShowProfileDrawer(true)}
-                  title="User Profile Menu"
-                  aria-label="User Profile Menu"
-                >
-                  <User size={18} />
-                </button>
-                <button
-                  type="button"
-                  className="signin-nav-btn"
-                  onClick={() => onNavigate('signin')}
-                >
-                  Sign In
-                </button>
-              </div>
-            )}
+              <button 
+                type="button" 
+                className="user-profile-chip-btn"
+                onClick={() => setShowProfileDrawer(true)}
+                aria-label="User profile drawer"
+                title="Open User Profile"
+              >
+                <div className="user-avatar-btn">
+                  {user?.avatar || 'PF'}
+                </div>
+                <span className="user-profile-chip-name">{user?.name ? user.name.split(' ')[0] : 'Profile'}</span>
+                <ChevronDown size={14} color="#64748B" />
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -387,13 +363,6 @@ export default function Navbar({
         isOpen={showProfileDrawer}
         onClose={() => setShowProfileDrawer(false)}
         onNavigate={onNavigate}
-        onOpenAuth={() => setShowAuthModal(true)}
-      />
-
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
       />
     </>
   );

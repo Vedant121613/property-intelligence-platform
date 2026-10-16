@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import { query } from './db.js';
+import { runAutoMigration } from './init-db.js';
 
 // Resolve __dirname in ES module context
 const __filename = fileURLToPath(import.meta.url);
@@ -869,10 +870,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: 'Internal server error' });
 });
 
-const server = app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', async () => {
   console.log(`[Pureframe Backend] Server running on http://0.0.0.0:${PORT}`);
   console.log(`[Pureframe Backend] Configured CORS origins: ${allowedOrigins.join(', ')}`);
   validateMsg91Config();
+  await runAutoMigration();
 });
 
 // Graceful shutdown handling for Docker / Coolify container lifecycle

@@ -31,6 +31,9 @@ console.log(`[DB] Connecting to PostgreSQL:
 const poolConfig = process.env.DATABASE_URL
   ? {
       connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' || process.env.DATABASE_URL.includes('render.com') || process.env.DATABASE_URL.includes('dpg-') || process.env.PGSSL === 'true'
+        ? { rejectUnauthorized: false }
+        : false,
       max: 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,

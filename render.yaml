@@ -52,4 +52,4 @@ databases:
   - name: pureframe-postgres
     plan: free
     databaseName: pureframe_db
-    user: postgres
+    user: pureframe_user

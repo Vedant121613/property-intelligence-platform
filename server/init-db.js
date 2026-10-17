@@ -26,6 +26,65 @@ export async function runAutoMigration() {
       console.log('[DB Auto-Init] Database tables verified.');
     }
 
+    // Ensure pune_projects table exists
+    await query(`
+      CREATE TABLE IF NOT EXISTS pune_projects (
+        id TEXT PRIMARY KEY,
+        project_id TEXT,
+        project_name TEXT NOT NULL,
+        project_slug TEXT,
+        rera_id TEXT,
+        registration_number TEXT,
+        date_of_registration TEXT,
+        proposed_completion_date TEXT,
+        taluka TEXT NOT NULL,
+        taluka_slug TEXT NOT NULL,
+        village TEXT NOT NULL,
+        village_slug TEXT NOT NULL,
+        address TEXT,
+        street_name TEXT,
+        locality TEXT,
+        pin_code TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_pune_projects_taluka ON pune_projects(taluka_slug);
+      CREATE INDEX IF NOT EXISTS idx_pune_projects_village ON pune_projects(village_slug);
+    `);
+
+    // Ensure any previously created tables have widened TEXT columns
+    try {
+      await query(`
+        ALTER TABLE IF EXISTS property_records 
+          ALTER COLUMN record_id TYPE TEXT,
+          ALTER COLUMN project_slug TYPE TEXT,
+          ALTER COLUMN project_name TYPE TEXT,
+          ALTER COLUMN locality TYPE TEXT,
+          ALTER COLUMN city TYPE TEXT,
+          ALTER COLUMN doc_no TYPE TEXT,
+          ALTER COLUMN reg_date TYPE TEXT,
+          ALTER COLUMN price_formatted TYPE TEXT,
+          ALTER COLUMN carpet_area TYPE TEXT,
+          ALTER COLUMN unit TYPE TEXT,
+          ALTER COLUMN building TYPE TEXT;
+
+        ALTER TABLE IF EXISTS kharadi_projects 
+          ALTER COLUMN id TYPE TEXT,
+          ALTER COLUMN name TYPE TEXT,
+          ALTER COLUMN slug TYPE TEXT,
+          ALTER COLUMN locality TYPE TEXT,
+          ALTER COLUMN taluka TYPE TEXT,
+          ALTER COLUMN city TYPE TEXT,
+          ALTER COLUMN developer TYPE TEXT,
+          ALTER COLUMN rera_id TYPE TEXT,
+          ALTER COLUMN quoted_pricing TYPE TEXT,
+          ALTER COLUMN bhks TYPE TEXT,
+          ALTER COLUMN completion TYPE TEXT,
+          ALTER COLUMN pin_code TYPE TEXT;
+      `);
+    } catch (widenErr) {
+      // Ignore if table doesn't exist yet
+    }
+
     // Kharadi Projects & Transactions Migration Check
     const kharadiCheck = await query(`
       SELECT EXISTS (

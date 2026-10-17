@@ -322,48 +322,100 @@ let sqlContent = `-- Pureframe Kharadi Property Records & Projects SQL
 -- Generated for PostgreSQL on Render & Local Development
 -- Database: pureframe_db
 
+-- 1. Create or widen Pune Projects Table
+CREATE TABLE IF NOT EXISTS pune_projects (
+    id TEXT PRIMARY KEY,
+    project_id TEXT,
+    project_name TEXT NOT NULL,
+    project_slug TEXT,
+    rera_id TEXT,
+    registration_number TEXT,
+    date_of_registration TEXT,
+    proposed_completion_date TEXT,
+    taluka TEXT NOT NULL,
+    taluka_slug TEXT NOT NULL,
+    village TEXT NOT NULL,
+    village_slug TEXT NOT NULL,
+    address TEXT,
+    street_name TEXT,
+    locality TEXT,
+    pin_code TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_pune_projects_taluka ON pune_projects(taluka_slug);
+CREATE INDEX IF NOT EXISTS idx_pune_projects_village ON pune_projects(village_slug);
+
+-- 2. Create Kharadi Projects Table
 CREATE TABLE IF NOT EXISTS kharadi_projects (
-    id VARCHAR(100) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    slug VARCHAR(100) NOT NULL UNIQUE,
-    locality VARCHAR(100) NOT NULL DEFAULT 'Kharadi',
-    taluka VARCHAR(100) NOT NULL DEFAULT 'Haveli',
-    city VARCHAR(100) NOT NULL DEFAULT 'Pune',
-    developer VARCHAR(255),
-    rera_id VARCHAR(100),
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    locality TEXT NOT NULL DEFAULT 'Kharadi',
+    taluka TEXT NOT NULL DEFAULT 'Haveli',
+    city TEXT NOT NULL DEFAULT 'Pune',
+    developer TEXT,
+    rera_id TEXT,
     sale_txns INTEGER NOT NULL DEFAULT 0,
     avg_price BIGINT NOT NULL DEFAULT 0,
-    quoted_pricing VARCHAR(100),
-    bhks VARCHAR(100),
-    completion VARCHAR(100),
+    quoted_pricing TEXT,
+    bhks TEXT,
+    completion TEXT,
     address TEXT,
-    pin_code VARCHAR(20) DEFAULT '411014',
+    pin_code TEXT DEFAULT '411014',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE IF EXISTS kharadi_projects 
+    ALTER COLUMN id TYPE TEXT,
+    ALTER COLUMN name TYPE TEXT,
+    ALTER COLUMN slug TYPE TEXT,
+    ALTER COLUMN locality TYPE TEXT,
+    ALTER COLUMN taluka TYPE TEXT,
+    ALTER COLUMN city TYPE TEXT,
+    ALTER COLUMN developer TYPE TEXT,
+    ALTER COLUMN rera_id TYPE TEXT,
+    ALTER COLUMN quoted_pricing TYPE TEXT,
+    ALTER COLUMN bhks TYPE TEXT,
+    ALTER COLUMN completion TYPE TEXT,
+    ALTER COLUMN pin_code TYPE TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_kharadi_projects_slug ON kharadi_projects(slug);
 CREATE INDEX IF NOT EXISTS idx_kharadi_projects_txns ON kharadi_projects(sale_txns DESC);
 
+-- 3. Create Property Records Table
 CREATE TABLE IF NOT EXISTS property_records (
     id SERIAL PRIMARY KEY,
-    record_id VARCHAR(50),
-    project_slug VARCHAR(100),
-    project_name VARCHAR(255),
-    locality VARCHAR(100) DEFAULT 'Kharadi',
-    city VARCHAR(100) DEFAULT 'Pune',
-    doc_no VARCHAR(100),
-    reg_date VARCHAR(50),
+    record_id TEXT,
+    project_slug TEXT,
+    project_name TEXT,
+    locality TEXT DEFAULT 'Kharadi',
+    city TEXT DEFAULT 'Pune',
+    doc_no TEXT,
+    reg_date TEXT,
     price BIGINT DEFAULT 0,
-    price_formatted VARCHAR(100),
-    carpet_area VARCHAR(100),
-    unit VARCHAR(100),
-    building VARCHAR(100),
+    price_formatted TEXT,
+    carpet_area TEXT,
+    unit TEXT,
+    building TEXT,
     purchaser TEXT,
     seller TEXT,
     sro_name TEXT,
     doc_type TEXT,
     scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE IF EXISTS property_records 
+    ALTER COLUMN record_id TYPE TEXT,
+    ALTER COLUMN project_slug TYPE TEXT,
+    ALTER COLUMN project_name TYPE TEXT,
+    ALTER COLUMN locality TYPE TEXT,
+    ALTER COLUMN city TYPE TEXT,
+    ALTER COLUMN doc_no TYPE TEXT,
+    ALTER COLUMN reg_date TYPE TEXT,
+    ALTER COLUMN price_formatted TYPE TEXT,
+    ALTER COLUMN carpet_area TYPE TEXT,
+    ALTER COLUMN unit TYPE TEXT,
+    ALTER COLUMN building TYPE TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_records_project_slug ON property_records(project_slug);
 CREATE INDEX IF NOT EXISTS idx_records_locality ON property_records(locality);
@@ -409,7 +461,9 @@ for (let i = 0; i < allTransactions.length; i += batchSize) {
 }
 
 fs.writeFileSync(dataSqlPath, sqlContent, 'utf8');
-console.log(`Successfully generated ${dataSqlPath} (${(fs.statSync(dataSqlPath).size / 1024).toFixed(1)} KB)`);
+const serverDataSqlPath = path.resolve(__dirname, 'data.sql');
+fs.writeFileSync(serverDataSqlPath, sqlContent, 'utf8');
+console.log(`Successfully generated ${dataSqlPath} and ${serverDataSqlPath} (${(fs.statSync(dataSqlPath).size / 1024).toFixed(1)} KB)`);
 
 // 2. Export clean JSON for frontend fallback / static usage
 const kharadiExport = {
@@ -443,4 +497,6 @@ const kharadiExport = {
 
 const jsonExportPath = path.resolve(__dirname, '../src/data/kharadiData.json');
 fs.writeFileSync(jsonExportPath, JSON.stringify(kharadiExport, null, 2), 'utf8');
-console.log(`Exported Kharadi JSON to ${jsonExportPath}`);
+const serverJsonPath = path.resolve(__dirname, 'kharadiData.json');
+fs.writeFileSync(serverJsonPath, JSON.stringify(kharadiExport, null, 2), 'utf8');
+console.log(`Exported Kharadi JSON to ${jsonExportPath} and ${serverJsonPath}`);

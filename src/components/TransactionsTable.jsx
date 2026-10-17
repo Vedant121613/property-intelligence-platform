@@ -17,9 +17,16 @@ export default function TransactionsTable({
   const handleUnlockSuccess = (txnId) => {
     setUnlockedIds(prev => new Set(prev).add(txnId));
     setSelectedTxn(null);
-    if (onNavigate) {
-      onNavigate('details', { transactionId: txnId });
-    }
+  };
+
+  const handleUnlockAll = () => {
+    const allIds = new Set([...unlockedIds, ...rows.map(r => r.id)]);
+    setUnlockedIds(allIds);
+  };
+
+  const handleDirectUnlock = (e, row) => {
+    e.stopPropagation();
+    setUnlockedIds(prev => new Set(prev).add(row.id));
   };
 
   return (
@@ -30,14 +37,39 @@ export default function TransactionsTable({
           <Info size={16} color="#94A3B8" style={{ cursor: 'pointer' }} />
         </div>
 
-        <button 
-          type="button" 
-          className="view-all-txns-btn"
-          onClick={onViewAllClick}
-        >
-          <span>View {totalTransactionsCount} Transactions</span>
-          <ArrowRight size={14} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={handleUnlockAll}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              background: '#ECFDF5',
+              color: '#065F46',
+              border: '1px solid #A7F3D0',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+            title="Unlock all deed amounts instantly"
+          >
+            <Unlock size={13} color="#059669" />
+            <span>Unlock All Prices (Unlimited)</span>
+          </button>
+
+          <button 
+            type="button" 
+            className="view-all-txns-btn"
+            onClick={onViewAllClick}
+          >
+            <span>View {totalTransactionsCount} Transactions</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -102,10 +134,8 @@ export default function TransactionsTable({
                       ) : (
                         <div 
                           className="locked-amount-badge"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedTxn(row);
-                          }}
+                          title="Click to reveal price (Unlimited)"
+                          onClick={(e) => handleDirectUnlock(e, row)}
                         >
                           <Lock size={12} />
                           <span>Unlock</span>

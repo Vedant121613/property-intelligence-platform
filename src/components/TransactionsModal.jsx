@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Search, Download } from 'lucide-react';
+import { X, Search, Lock, Unlock } from 'lucide-react';
 
 export default function TransactionsModal({
   isOpen,
@@ -9,6 +9,8 @@ export default function TransactionsModal({
 }) {
   const [filterType, setFilterType] = useState('all');
   const [unitSearch, setUnitSearch] = useState('');
+  const [unlockedIds, setUnlockedIds] = useState(new Set());
+  const [allUnlocked, setAllUnlocked] = useState(false);
 
   if (!isOpen) return null;
 
@@ -24,11 +26,30 @@ export default function TransactionsModal({
       return (
         item.unit.toLowerCase().includes(q) ||
         item.floorTower.toLowerCase().includes(q) ||
-        item.amount.toLowerCase().includes(q)
+        (item.amount && item.amount.toLowerCase().includes(q))
       );
     }
     return true;
   });
+
+  const toggleUnlockRow = (id) => {
+    setUnlockedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleToggleAll = () => {
+    if (allUnlocked) {
+      setAllUnlocked(false);
+      setUnlockedIds(new Set());
+    } else {
+      setAllUnlocked(true);
+      setUnlockedIds(new Set(combined.map(c => c.id)));
+    }
+  };
 
   return (
     <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
@@ -44,8 +65,8 @@ export default function TransactionsModal({
           </div>
           <button 
             type="button" 
+            className="modal-close-btn"
             onClick={onClose}
-            style={{ color: '#64748B', padding: '6px', borderRadius: '4px' }}
             aria-label="Close"
           >
             <X size={20} />
@@ -53,8 +74,8 @@ export default function TransactionsModal({
         </div>
 
         <div className="modal-body">
-          {/* Controls: Search & Type */}
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          {/* Controls: Search, Type & Unlock All */}
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
             <div style={{ flex: 1, minWidth: '220px', position: 'relative' }}>
               <Search size={16} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '10px' }} />
               <input 
@@ -72,14 +93,14 @@ export default function TransactionsModal({
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               {['all', 'sale', 'rent'].map(type => (
                 <button
                   key={type}
                   type="button"
                   onClick={() => setFilterType(type)}
                   style={{
-                    padding: '8px 16px',
+                    padding: '8px 14px',
                     borderRadius: '6px',
                     fontSize: '0.85rem',
                     fontWeight: 600,
@@ -92,6 +113,29 @@ export default function TransactionsModal({
                   {type}
                 </button>
               ))}
+
+              <button
+                type="button"
+                onClick={handleToggleAll}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  borderRadius: '6px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  background: allUnlocked ? '#0F766E' : '#ECFDF5',
+                  color: allUnlocked ? '#FFFFFF' : '#065F46',
+                  border: allUnlocked ? '1px solid #0F766E' : '1px solid #A7F3D0',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Unlock all deed amounts instantly"
+              >
+                {allUnlocked ? <Lock size={14} /> : <Unlock size={14} />}
+                <span>{allUnlocked ? 'Lock Prices' : '⚡ Unlock All (Unlimited)'}</span>
+              </button>
             </div>
           </div>
 
@@ -109,17 +153,42 @@ export default function TransactionsModal({
               </thead>
               <tbody>
                 {filtered.length > 0 ? (
-                  filtered.map((row) => (
-                    <tr key={row.id}>
-                      <td>{row.date}</td>
-                      <td>
-                        <span className="sale-pill">{row.type}</span>
-                      </td>
-                      <td>{row.floorTower}</td>
-                      <td>{row.unit}</td>
-                      <td className="amount-text">{row.amount}</td>
-                    </tr>
-                  ))
+                  filtered.map((row) => {
+                    const isUnlocked = allUnlocked || unlockedIds.has(row.id);
+                    return (
+                      <tr key={row.id}>
+                        <td>{row.date}</td>
+                        <td>
+                          <span className="sale-pill">{row.type}</span>
+                        </td>
+                        <td>{row.floorTower}</td>
+                        <td style={{ fontWeight: 600 }}>{row.unit}</td>
+                        <td>
+                          {isUnlocked ? (
+                            <div 
+                              style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                              onClick={() => toggleUnlockRow(row.id)}
+                              title="Click to lock price"
+                            >
+                              <span className="amount-text" style={{ color: '#15803D' }}>{row.amount}</span>
+                              <Unlock size={13} color="#15803D" />
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              className="locked-amount-badge"
+                              onClick={() => toggleUnlockRow(row.id)}
+                              title="Click to unlock price (Unlimited)"
+                              style={{ border: 'none', cursor: 'pointer' }}
+                            >
+                              <Lock size={12} />
+                              <span>Unlock</span>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
                     <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: '#94A3B8' }}>

@@ -106,6 +106,7 @@ export default function ProfilePage({ onNavigate }) {
 
         {/* Profile Header Card - Executive Royal Sapphire Navy Theme */}
         <div 
+          className="profile-hero-card"
           style={{
             background: 'linear-gradient(135deg, #0A1329 0%, #0F172A 50%, #1E3A8A 100%)',
             borderRadius: '24px',
@@ -279,6 +280,7 @@ export default function ProfilePage({ onNavigate }) {
 
         {/* 3 by 3 Attempts Tracker Banner & Quick Metrics */}
         <div 
+          className="profile-metrics-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',

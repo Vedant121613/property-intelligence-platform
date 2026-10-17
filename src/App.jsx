@@ -11,6 +11,7 @@ import LocalityPage from './pages/LocalityPage';
 import ProjectPage from './pages/ProjectPage';
 import ProfilePage from './pages/ProfilePage';
 import PlansPage from './pages/PlansPage';
+import MobileBottomNav from './components/MobileBottomNav';
 
 function AppContent() {
   const [route, setRoute] = useState(() => {
@@ -202,6 +203,12 @@ function AppContent() {
 
       {/* Floating Chat Assistant */}
       <ChatWidget />
+
+      {/* Mobile Bottom Navigation Bar (Visible only on mobile devices) */}
+      <MobileBottomNav 
+        currentRoute={route.page} 
+        onNavigate={navigateTo} 
+      />
     </div>
   );
 }

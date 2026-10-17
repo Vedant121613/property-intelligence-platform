@@ -24,10 +24,10 @@ export const DEFAULT_USER = {
   city: 'Pune',
   role: 'Home Buyer & Investor',
   avatar: 'PF',
-  free_attempts_left: 3,
+  free_attempts_left: 9999,
   free_attempts_used: 0,
-  is_payment_done: false,
-  selected_plan: 'none',
+  is_payment_done: true,
+  selected_plan: 'unlimited',
   unlocked_deeds: [],
   joinedDate: 'October 2026',
   verifiedBadge: true,
@@ -41,10 +41,12 @@ export function AuthProvider({ children }) {
       const saved = localStorage.getItem('pureframe_user');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed?.name === 'Vedant Sharma' || parsed?.id === 'usr_8921') {
-          return DEFAULT_USER;
-        }
-        return parsed || DEFAULT_USER;
+        return {
+          ...DEFAULT_USER,
+          ...parsed,
+          free_attempts_left: 9999,
+          is_payment_done: true
+        };
       }
       return DEFAULT_USER;
     } catch {
@@ -52,32 +54,9 @@ export function AuthProvider({ children }) {
     }
   });
 
-  const [freeAttemptsLeft, setFreeAttemptsLeft] = useState(() => {
-    try {
-      const saved = localStorage.getItem('pureframe_free_attempts');
-      return saved !== null ? parseInt(saved, 10) : 3;
-    } catch {
-      return 3;
-    }
-  });
-
-  const [freeAttemptsUsed, setFreeAttemptsUsed] = useState(() => {
-    try {
-      const saved = localStorage.getItem('pureframe_attempts_used');
-      return saved !== null ? parseInt(saved, 10) : (user?.free_attempts_used ?? 0);
-    } catch {
-      return 0;
-    }
-  });
-
-  const [isPaymentDone, setIsPaymentDone] = useState(() => {
-    try {
-      const saved = localStorage.getItem('pureframe_is_paid');
-      return saved !== null ? JSON.parse(saved) : (user?.is_payment_done ?? false);
-    } catch {
-      return false;
-    }
-  });
+  const [freeAttemptsLeft, setFreeAttemptsLeft] = useState(9999);
+  const [freeAttemptsUsed, setFreeAttemptsUsed] = useState(0);
+  const [isPaymentDone, setIsPaymentDone] = useState(true);
 
   const [selectedPlan, setSelectedPlan] = useState(() => {
     try {

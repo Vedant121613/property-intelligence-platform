@@ -164,32 +164,52 @@ export async function getLocalityProjects(cityId = 'pune', localityId = 'saswad-
     }
   }
 
-  if (csvProjects.length > 0) {
+  const key = `${cityId.toLowerCase()}/${cleanLocality}`;
+  if (PROJECTS_BY_LOCALITY[key] && PROJECTS_BY_LOCALITY[key].length > 0) {
+    const projects = PROJECTS_BY_LOCALITY[key];
     return Promise.resolve({
       cityId,
       localityId,
-      localityName: foundVillageName,
-      talukaName: foundTalukaName,
-      projects: csvProjects.map(p => ({
-        id: p.id,
-        name: p.name,
-        city: 'Pune',
-        locality: p.village,
-        taluka: p.taluka,
-        saleTxns: Math.floor(20 + Math.random() * 80),
-        lastSoldDate: 'Oct 2026',
-        lastSoldPrice: 'Rs. ' + (45 + (Math.floor(p.projectId) % 60)) + '.50 Lac',
-        developer: 'MahaRERA Registered Promoter',
-        rera: p.rera
-      })),
-      totalProjects: csvProjects.length,
+      localityName: cleanLocality === 'kharadi' ? 'Kharadi' : localityId.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '),
+      talukaName: 'Haveli',
+      projects,
+      totalProjects: projects.length,
       duration,
       faqs: []
     });
   }
 
-  const key = `${cityId.toLowerCase()}/${localityId.toLowerCase()}`;
-  const projects = PROJECTS_BY_LOCALITY[key] || PROJECTS_BY_LOCALITY['pune/saswad-road'] || [];
+  if (csvProjects.length > 0) {
+    const mapped = csvProjects.map(p => ({
+      id: p.id,
+      name: p.name,
+      city: 'Pune',
+      locality: p.village || foundVillageName,
+      taluka: p.taluka || foundTalukaName,
+      saleTxns: p.saleTxns !== undefined ? p.saleTxns : Math.floor(20 + Math.random() * 80),
+      lastSoldDate: p.lastSoldDate || 'Apr 2025',
+      lastSoldPrice: p.lastSoldPrice || ('Rs. ' + (45 + (Math.floor(p.projectId || 1) % 60)) + '.50 Lac'),
+      developer: p.developer || 'MahaRERA Registered Promoter',
+      bhks: p.bhks || '1, 2, 3 BHK',
+      quotedPricing: p.quotedPricing || '₹ 45 Lac - 1.25 Cr',
+      rera: p.rera
+    }));
+
+    mapped.sort((a, b) => (b.saleTxns || 0) - (a.saleTxns || 0));
+
+    return Promise.resolve({
+      cityId,
+      localityId,
+      localityName: foundVillageName,
+      talukaName: foundTalukaName,
+      projects: mapped,
+      totalProjects: mapped.length,
+      duration,
+      faqs: []
+    });
+  }
+
+  const projects = PROJECTS_BY_LOCALITY['pune/saswad-road'] || [];
   
   return Promise.resolve({
     cityId,
@@ -217,17 +237,75 @@ export async function getProjectDetails(projectId = 'heera-solitaire', talukaSlu
   }
 
   const normalized = (projectId || '').toLowerCase().replace(/\s+/g, '-');
-  const baseMock = PROJECT_DETAILS[normalized];
+  const baseMock = PROJECT_DETAILS[normalized] || PROJECT_DETAILS[projectId];
+  if (baseMock) {
+    return Promise.resolve(baseMock);
+  }
 
   const pRecord = findPuneProject(projectId, talukaSlug, villageSlug);
 
-  const projectName = pRecord?.name || baseMock?.name || projectId.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
-  const locality = pRecord?.village || baseMock?.locality || 'Baner';
+  const projectName = pRecord?.name || projectId.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+  const locality = pRecord?.village || 'Kharadi';
   const taluka = pRecord?.taluka || 'Haveli';
-  const reraNo = pRecord?.rera || baseMock?.reraNumbers || `P521000${Math.floor(10000 + Math.random() * 90000)}`;
-  const address = pRecord?.address || baseMock?.address || `${locality}, ${taluka}, Pune`;
+  const reraNo = pRecord?.rera || `P521000${Math.floor(10000 + Math.random() * 90000)}`;
+  const address = pRecord?.address || `${locality}, ${taluka}, Pune - 411014`;
 
-  // Generate realistic registered sale transactions with locked deed amounts
+  // If pRecord has real registered transactions from Kharadi data
+  if (pRecord?.recentTransactions && pRecord.recentTransactions.length > 0) {
+    const realTxns = pRecord.recentTransactions.map(t => ({
+      id: t.id,
+      date: t.date || 'Apr 2025',
+      type: t.docType || 'Sale / Title Deed',
+      floorTower: t.building || 'Wing A',
+      unit: t.unit || 'Residential Unit',
+      amount: t.priceFormatted || '₹ 85.00 Lac',
+      purchaser: t.purchaser || 'Verified Citizen',
+      seller: t.seller || pRecord.developer,
+      docNo: t.docNo,
+      carpetArea: t.carpetArea,
+      isLocked: true,
+      project: projectName
+    }));
+
+    return Promise.resolve({
+      id: normalized,
+      slug: `Pune ${taluka} ${locality} ${projectName}`,
+      name: projectName,
+      city: 'Pune',
+      locality,
+      taluka,
+      address,
+      developer: pRecord.developer || 'Reputed Pune Developer',
+      totalUnits: `${pRecord.saleTxns ? Math.max(pRecord.saleTxns * 2, 200) : 250} Units`,
+      soldUnits: `${pRecord.saleTxns || 120} Units`,
+      completion: pRecord.completion || 'Ready / 2026',
+      bhks: pRecord.bhks || '1, 2, 3 BHK',
+      rera: reraNo,
+      quotedPricing: pRecord.quotedPricing || '₹ 45 Lac - 1.25 Cr',
+      reraNumbers: reraNo,
+      lastSold: {
+        date: pRecord.lastSoldDate || 'Apr 2025',
+        amount: pRecord.lastSoldPrice || '₹ 85.00 Lac',
+        direction: 'up'
+      },
+      bhkAnalysis: {
+        updatedDate: 'Last Updated on MahaRERA & IGR Pune - Apr 2025',
+        soldPercentage: 78,
+        unitsSoldSummary: `${pRecord.saleTxns || realTxns.length} registered deeds`,
+        breakdown: [
+          { bhk: pRecord.bhks?.includes('Office') ? 'Office Spaces' : '2 BHK', totalUnits: '120', unitsSold: '95', percentage: '79%' },
+          { bhk: pRecord.bhks?.includes('Office') ? 'Retail Units' : '3 BHK', totalUnits: '80', unitsSold: '55', percentage: '68%' }
+        ]
+      },
+      totalTransactionsCount: pRecord.saleTxns || realTxns.length,
+      transactions: {
+        sale: realTxns,
+        rent: []
+      },
+      litigations: { totalCases: '0', items: [] },
+      reraComplaints: { totalComplaints: '0', items: [] }
+    });
+  }
   const txns = [
     {
       id: `${normalized}-101`,

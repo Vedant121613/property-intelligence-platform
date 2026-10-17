@@ -21,6 +21,9 @@ dist
 dist-ssr
 *.local
 
+# Raw source data dumps
+data 1.9.*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

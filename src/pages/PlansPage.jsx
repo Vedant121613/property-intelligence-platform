@@ -200,6 +200,7 @@ export default function PlansPage({ onNavigate }) {
 
         {/* Pricing Cards Grid */}
         <div 
+          className="plans-pricing-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',

@@ -7,7 +7,7 @@
  * across logins, re-logins, page refreshes, and even if the backend is temporarily offline.
  */
 
-const API_ROOT = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '');
+const API_ROOT = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || 'http://localhost:5000').replace(/\/+$/, '');
 const API_BASE = `${API_ROOT}/api`;
 const REGISTRY_KEY = 'pureframe_users_registry';
 
@@ -263,42 +263,27 @@ export async function dbUnlockDeed(phone, transactionId) {
     };
   }
 
-  // Case C: Free attempt available (> 0)
-  if (localUser.free_attempts_left > 0) {
-    const newLeft = Math.max(0, localUser.free_attempts_left - 1);
-    const newUsed = (localUser.free_attempts_used || 0) + 1;
-    unlockedDeeds.push(txnStr);
+  // Case C: Unlimited unlocks
+  unlockedDeeds.push(txnStr);
+  const updated = saveLocalUserByPhone(cleanPhone, {
+    ...localUser,
+    free_attempts_left: 9999,
+    free_attempts_used: (localUser.free_attempts_used || 0) + 1,
+    is_payment_done: true,
+    selected_plan: 'unlimited',
+    unlocked_deeds: unlockedDeeds
+  });
 
-    const updated = saveLocalUserByPhone(cleanPhone, {
-      ...localUser,
-      free_attempts_left: newLeft,
-      free_attempts_used: newUsed,
-      unlocked_deeds: unlockedDeeds
-    });
-
-    return {
-      success: true,
-      unlocked: true,
-      method: 'free_trial',
-      free_attempts_left: newLeft,
-      free_attempts_used: newUsed,
-      is_payment_done: false,
-      selected_plan: updated.selected_plan,
-      unlocked_deeds: unlockedDeeds,
-      message: `Deed unlocked successfully! You have ${newLeft} free attempt(s) remaining.`
-    };
-  }
-
-  // Case D: Free limit reached (0 attempts left)
   return {
-    success: false,
-    unlocked: false,
-    limitReached: true,
-    free_attempts_left: 0,
-    free_attempts_used: localUser.free_attempts_used || 3,
-    is_payment_done: false,
-    selected_plan: localUser.selected_plan,
-    message: 'You have used all 3 free deed unlocks. Please select a subscription plan to continue.'
+    success: true,
+    unlocked: true,
+    method: 'unlimited',
+    free_attempts_left: 9999,
+    free_attempts_used: (localUser.free_attempts_used || 0) + 1,
+    is_payment_done: true,
+    selected_plan: 'unlimited',
+    unlocked_deeds: unlockedDeeds,
+    message: 'Deed unlocked successfully (Unlimited Unlocks Active)!'
   };
 }
 

@@ -46,6 +46,8 @@ export default function LocalityPage({
     { label: cityName, target: { page: 'city', params: { cityId } } }
   ];
 
+  const [unlockAllPrices, setUnlockAllPrices] = useState(false);
+
   return (
     <div>
       <HeroBanner
@@ -60,12 +62,40 @@ export default function LocalityPage({
 
       <main className="cards-section">
         <div className="content-wrapper">
+          {/* Quick Toolbar for Unlocks */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 600 }}>
+              Showing {data.projects.length} verified projects in {data.localityName}
+            </span>
+            <button
+              type="button"
+              onClick={() => setUnlockAllPrices(prev => !prev)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                borderRadius: '8px',
+                fontSize: '0.825rem',
+                fontWeight: 700,
+                background: unlockAllPrices ? '#0F766E' : '#EFF6FF',
+                color: unlockAllPrices ? '#FFFFFF' : '#1D4ED8',
+                border: unlockAllPrices ? '1px solid #0F766E' : '1px solid #BFDBFE',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span>{unlockAllPrices ? '🔒 Lock Prices' : '⚡ Unlock All Prices (Unlimited)'}</span>
+            </button>
+          </div>
+
           {/* Projects Grid */}
           <div className="cards-grid-3">
             {data.projects.map((project) => (
               <ProjectCard
-                key={project.id}
+                key={`${project.id}-${unlockAllPrices}`}
                 project={project}
+                defaultUnlocked={unlockAllPrices}
                 onClick={() => onNavigate('project', { 
                   cityId, 
                   localityId, 

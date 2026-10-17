@@ -25,6 +25,40 @@ export async function runAutoMigration() {
     } else {
       console.log('[DB Auto-Init] Database tables verified.');
     }
+
+    // Kharadi Projects & Transactions Migration Check
+    const kharadiCheck = await query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'kharadi_projects'
+      );
+    `);
+
+    let needKharadiSeed = !kharadiCheck.rows[0]?.exists;
+    if (!needKharadiSeed) {
+      const countRes = await query(`SELECT COUNT(*) FROM kharadi_projects`);
+      if (parseInt(countRes.rows[0]?.count || 0, 10) === 0) {
+        needKharadiSeed = true;
+      }
+    }
+
+    if (needKharadiSeed) {
+      console.log('[DB Auto-Init] Initializing Kharadi projects & property records from data.sql...');
+      const dataSqlPath = fs.existsSync(resolve(__dirname, 'data.sql'))
+        ? resolve(__dirname, 'data.sql')
+        : resolve(__dirname, '../data.sql');
+
+      if (fs.existsSync(dataSqlPath)) {
+        const sql = fs.readFileSync(dataSqlPath, 'utf8');
+        await query(sql);
+        console.log('[DB Auto-Init] Kharadi data.sql imported successfully into PostgreSQL!');
+      } else {
+        console.warn('[DB Auto-Init] data.sql not found at', dataSqlPath);
+      }
+    } else {
+      console.log('[DB Auto-Init] Kharadi projects verified in PostgreSQL.');
+    }
   } catch (err) {
     console.warn('[DB Auto-Init] Schema check/migration note:', err.message);
   }

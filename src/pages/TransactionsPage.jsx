@@ -34,6 +34,7 @@ export default function TransactionsPage({
   const [minArea, setMinArea] = useState('');
   const [maxArea, setMaxArea] = useState('');
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'cards'
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Local unlocked items state
   const [unlockedTxnIds, setUnlockedTxnIds] = useState(new Set());
@@ -89,6 +90,7 @@ export default function TransactionsPage({
       <div className="content-wrapper" style={{ padding: '24px 24px 48px' }}>
         {/* Project Header Card */}
         <div 
+          className="txn-project-header-card"
           style={{
             background: '#FFFFFF',
             border: '1px solid #E2E8F0',
@@ -221,59 +223,84 @@ export default function TransactionsPage({
         </div>
 
         {/* Section Heading & View Switcher */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1E293B' }}>
+        <div className="txns-toolbar-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1E293B', margin: 0 }}>
             Showing {data.totalCount} transactions
           </h2>
 
-          {/* View Mode Toggle: Table or Card Grid */}
-          <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: '8px', padding: '3px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Mobile Filter Toggle Button */}
             <button
               type="button"
-              onClick={() => setViewMode('table')}
+              className="mobile-filter-toggle-btn"
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px',
-                padding: '6px 12px',
-                borderRadius: '6px',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '8px',
                 fontSize: '0.8rem',
                 fontWeight: 700,
-                background: viewMode === 'table' ? '#FFFFFF' : 'transparent',
-                color: viewMode === 'table' ? '#1E293B' : '#64748B',
-                boxShadow: viewMode === 'table' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                border: '1px solid #CBD5E1',
+                background: showMobileFilters ? '#EFF6FF' : '#FFFFFF',
+                color: showMobileFilters ? '#1D4ED8' : '#334155'
               }}
             >
-              <List size={14} />
-              <span>Table</span>
+              <Filter size={14} />
+              <span>Filters {txTypeFilter !== 'all' || startDate || minArea ? '• Active' : ''}</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('cards')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                background: viewMode === 'cards' ? '#FFFFFF' : 'transparent',
-                color: viewMode === 'cards' ? '#1E293B' : '#64748B',
-                boxShadow: viewMode === 'cards' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-              }}
-            >
-              <LayoutGrid size={14} />
-              <span>Cards</span>
-            </button>
+
+            {/* View Mode Toggle: Table or Card Grid */}
+            <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: '8px', padding: '3px' }}>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  background: viewMode === 'table' ? '#FFFFFF' : 'transparent',
+                  color: viewMode === 'table' ? '#1E293B' : '#64748B',
+                  boxShadow: viewMode === 'table' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                }}
+              >
+                <List size={14} />
+                <span>Table</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('cards')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  background: viewMode === 'cards' ? '#FFFFFF' : 'transparent',
+                  color: viewMode === 'cards' ? '#1E293B' : '#64748B',
+                  boxShadow: viewMode === 'cards' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                }}
+              >
+                <LayoutGrid size={14} />
+                <span>Cards</span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* 2-Column Layout: Sidebar Filters + Main Table */}
-        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '24px', alignItems: 'flex-start' }}>
+        <div className="transactions-layout-grid">
           
           {/* Left Sidebar Filters (Screenshot 4) */}
           <aside 
+            className={`txn-sidebar-filters ${showMobileFilters ? 'mobile-visible' : ''}`}
             style={{
               background: '#FFFFFF',
               border: '1px solid #E2E8F0',

@@ -288,7 +288,7 @@ export default function CityPage({ cityId = 'pune', onNavigate }) {
         <div className="content-wrapper">
 
           {/* Navigation Controls & Search Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', marginBottom: '24px' }}>
+          <div className="city-nav-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', marginBottom: '24px' }}>
             
             {/* Left: Step-back button if deep in hierarchy */}
             <div>

@@ -45,14 +45,7 @@ export default function CityMonumentCards({ onSelectCity, onNavigate }) {
         </div>
 
         {/* 2 Focused City Cards: Pune (Live) & Mumbai (Upcoming) */}
-        <div 
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 360px))',
-            gap: '18px'
-          }}
-          className="city-monument-grid"
-        >
+        <div className="city-monument-grid">
           {CITIES.map((city) => {
             const isUpcoming = Boolean(city.isUpcoming);
 

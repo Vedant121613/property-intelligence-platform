@@ -34,8 +34,10 @@ export default function Navbar({
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showProfileDrawer, setShowProfileDrawer] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   
   const searchRef = useRef(null);
+  const mobileSearchRef = useRef(null);
   const cityRef = useRef(null);
   const userMenuRef = useRef(null);
 
@@ -70,6 +72,9 @@ export default function Navbar({
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSearchDropdown(false);
       }
+      if (mobileSearchRef.current && !mobileSearchRef.current.contains(event.target)) {
+        // Only close dropdown, keep search bar if desired, or let user close via X
+      }
       if (cityRef.current && !cityRef.current.contains(event.target)) {
         setShowCityDropdown(false);
       }
@@ -83,12 +88,14 @@ export default function Navbar({
 
   const handleSelectLocality = (localityId) => {
     setShowSearchDropdown(false);
+    setShowMobileSearch(false);
     setSearchQuery('');
     onNavigate('locality', { cityId: currentCity, localityId });
   };
 
   const handleSelectProject = (projectId, localityId) => {
     setShowSearchDropdown(false);
+    setShowMobileSearch(false);
     setSearchQuery('');
     if (projectId === 'y-square') {
       onNavigate('transactions', { projectId: 'y-square', cityId: 'mumbai' });
@@ -277,12 +284,23 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Right Navigation Actions (Matching Screenshots 2, 3, 4) */}
+          {/* Right Navigation Actions */}
           <div className="navbar-actions">
-            {/* Cart / Orders Button */}
+            {/* Mobile Search Toggle Button (Visible only on mobile) */}
             <button 
               type="button" 
-              className="navbar-action-btn"
+              className="navbar-action-btn mobile-search-toggle-btn"
+              title="Search Localities & Projects"
+              aria-label="Search Localities & Projects"
+              onClick={() => setShowMobileSearch(!showMobileSearch)}
+            >
+              {showMobileSearch ? <X size={19} color="#1D4ED8" /> : <Search size={19} />}
+            </button>
+
+            {/* Cart / Orders Button (Desktop Only) */}
+            <button 
+              type="button" 
+              className="navbar-action-btn desktop-nav-only"
               title="Deed Agreements & Cart"
               aria-label="Deed Agreements & Cart"
               onClick={() => onNavigate('profile')}
@@ -290,10 +308,10 @@ export default function Navbar({
               <ShoppingCart size={19} />
             </button>
 
-            {/* Viewed Transactions (Eye Icon with count badge) */}
+            {/* Viewed Transactions (Desktop Only) */}
             <button 
               type="button" 
-              className="navbar-action-btn"
+              className="navbar-action-btn desktop-nav-only"
               title="Viewed Transactions"
               aria-label="Viewed Transactions"
               onClick={() => onNavigate('profile')}
@@ -302,10 +320,10 @@ export default function Navbar({
               <span className="badge-counter">{unlockedTxns.length || 0}</span>
             </button>
 
-            {/* Watchlist Button */}
+            {/* Watchlist Button (Desktop Only) */}
             <button 
               type="button" 
-              className="navbar-action-btn"
+              className="navbar-action-btn desktop-nav-only"
               title="Saved Watchlist"
               aria-label="Saved Watchlist"
               onClick={() => onNavigate('profile')}
@@ -316,10 +334,11 @@ export default function Navbar({
               )}
             </button>
             
-            {/* User Profile Avatar Button (Opens Slide-over Drawer - Screenshot 4) */}
+            {/* User Profile Avatar Button (Opens Slide-over Drawer) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {/* 3 of 3 Attempts Tracker */}
               <div 
+                className="pro-badge-nav-chip"
                 onClick={() => onNavigate('profile')}
                 style={{
                   display: 'flex',
@@ -337,7 +356,7 @@ export default function Navbar({
                 title={isPaymentDone ? 'Pro Member' : `${freeAttemptsLeft} of 3 Free Attempts remaining`}
               >
                 <ShieldCheck size={13} />
-                <span>{isPaymentDone ? 'PRO' : `${freeAttemptsLeft}/3 Free`}</span>
+                <span>{isPaymentDone ? 'PRO' : `${freeAttemptsLeft}/3`}</span>
               </div>
 
               <button 
@@ -356,6 +375,77 @@ export default function Navbar({
             </div>
           </div>
         </div>
+
+        {/* Mobile Search Bar Drawer */}
+        {showMobileSearch && (
+          <div className="mobile-search-dropdown-bar" ref={mobileSearchRef}>
+            <div className="mobile-search-input-box">
+              <Search size={16} color="#64748B" />
+              <input
+                type="text"
+                placeholder="Search Pune localities, deeds, projects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+                aria-label="Mobile property search"
+              />
+              {searchQuery && (
+                <button type="button" onClick={() => setSearchQuery('')} style={{ color: '#94A3B8', padding: '2px' }}>
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Mobile Search Results */}
+            {(searchResults.localities.length > 0 || searchResults.projects.length > 0) && (
+              <div className="mobile-search-results">
+                {searchResults.localities.length > 0 && (
+                  <div>
+                    <div className="search-group-title">Localities</div>
+                    {searchResults.localities.slice(0, 4).map(loc => (
+                      <div 
+                        key={loc.id} 
+                        className="search-item"
+                        onClick={() => handleSelectLocality(loc.id)}
+                      >
+                        <div className="search-item-info">
+                          <MapPin size={14} color="#1D4ED8" />
+                          <div>
+                            <div className="search-item-name">{loc.name}</div>
+                            <div className="search-item-sub">{loc.saleTxns} deeds</div>
+                          </div>
+                        </div>
+                        <ArrowRight size={14} color="#94A3B8" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {searchResults.projects.length > 0 && (
+                  <div>
+                    <div className="search-group-title">Projects</div>
+                    {searchResults.projects.slice(0, 4).map(proj => (
+                      <div 
+                        key={proj.id} 
+                        className="search-item"
+                        onClick={() => handleSelectProject(proj.id, 'saswad-road')}
+                      >
+                        <div className="search-item-info">
+                          <Building2 size={14} color="#1D4ED8" />
+                          <div>
+                            <div className="search-item-name">{proj.name}</div>
+                            <div className="search-item-sub">{proj.locality}</div>
+                          </div>
+                        </div>
+                        <ArrowRight size={14} color="#94A3B8" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       {/* Profile Slide-Over Drawer (Screenshot 4) */}

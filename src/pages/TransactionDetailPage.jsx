@@ -230,14 +230,7 @@ export default function TransactionDetailPage({
           <div style={{ width: '100%', height: '1px', background: '#F1F5F9', margin: '20px 0' }} />
 
           {/* Detailed Specification Grid (Screenshot 5) */}
-          <div 
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(5, 1fr)',
-              gap: '24px 20px',
-              marginBottom: '28px'
-            }}
-          >
+          <div className="txn-specs-grid">
             <div>
               <div style={{ fontSize: '0.775rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <span>Amount</span>

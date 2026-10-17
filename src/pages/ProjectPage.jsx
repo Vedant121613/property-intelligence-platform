@@ -7,7 +7,9 @@ import {
   Search, 
   ChevronRight,
   Zap,
-  ChevronDown
+  ChevronDown,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import Breadcrumbs from '../components/Breadcrumbs';
 import TransactionsTable from '../components/TransactionsTable';
@@ -29,6 +31,7 @@ export default function ProjectPage({
   const [loading, setLoading] = useState(true);
   const [showAllTxnsModal, setShowAllTxnsModal] = useState(false);
   const [bhkFilter, setBhkFilter] = useState('all');
+  const [unlockedLastSold, setUnlockedLastSold] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -145,12 +148,41 @@ export default function ProjectPage({
 
           {/* Last Sold Highlight Banner (Screenshot 3) */}
           {project.lastSold && (
-            <div className="last-sold-banner">
-              <Zap size={16} color="#D97706" />
-              <span>
-                Last sold - {project.lastSold.date} - {project.lastSold.amount}
-              </span>
-              <ArrowDown size={14} />
+            <div className="last-sold-banner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Zap size={16} color="#D97706" />
+                {unlockedLastSold ? (
+                  <span style={{ fontWeight: 700, color: '#047857' }}>
+                    Last sold - {project.lastSold.date} - {project.lastSold.amount}
+                  </span>
+                ) : (
+                  <span>
+                    Last sold - {project.lastSold.date} - ••••••••••
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setUnlockedLastSold(prev => !prev)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  background: unlockedLastSold ? '#ECFDF5' : '#FFFBEB',
+                  color: unlockedLastSold ? '#047857' : '#B45309',
+                  border: unlockedLastSold ? '1px solid #A7F3D0' : '1px solid #FDE68A',
+                  padding: '4px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                title="Toggle price visibility (Unlimited)"
+              >
+                {unlockedLastSold ? <Unlock size={13} /> : <Lock size={13} />}
+                <span>{unlockedLastSold ? 'Unlocked (Unlimited)' : 'Unlock Price'}</span>
+              </button>
             </div>
           )}
         </div>

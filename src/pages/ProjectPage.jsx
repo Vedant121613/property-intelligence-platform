@@ -31,7 +31,7 @@ export default function ProjectPage({
   const [loading, setLoading] = useState(true);
   const [showAllTxnsModal, setShowAllTxnsModal] = useState(false);
   const [bhkFilter, setBhkFilter] = useState('all');
-  const [unlockedLastSold, setUnlockedLastSold] = useState(false);
+  const [unlockedLastSold, setUnlockedLastSold] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -163,7 +163,11 @@ export default function ProjectPage({
               </div>
               <button
                 type="button"
-                onClick={() => setUnlockedLastSold(prev => !prev)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setUnlockedLastSold(prev => !prev);
+                }}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',

@@ -9,24 +9,45 @@ export default function TransactionsTable({
   onNavigate
 }) {
   const [activeTab, setActiveTab] = useState('sale');
-  const [unlockedIds, setUnlockedIds] = useState(new Set());
+  const [allUnlocked, setAllUnlocked] = useState(true);
+  const [lockedIds, setLockedIds] = useState(new Set());
   const [selectedTxn, setSelectedTxn] = useState(null);
 
   const rows = (activeTab === 'sale' ? transactions.sale : transactions.rent) || [];
 
   const handleUnlockSuccess = (txnId) => {
-    setUnlockedIds(prev => new Set(prev).add(txnId));
+    setLockedIds(prev => {
+      const next = new Set(prev);
+      next.delete(txnId);
+      return next;
+    });
     setSelectedTxn(null);
   };
 
-  const handleUnlockAll = () => {
-    const allIds = new Set([...unlockedIds, ...rows.map(r => r.id)]);
-    setUnlockedIds(allIds);
+  const handleToggleAll = () => {
+    if (allUnlocked) {
+      setAllUnlocked(false);
+      setLockedIds(new Set(rows.map(r => r.id)));
+    } else {
+      setAllUnlocked(true);
+      setLockedIds(new Set());
+    }
   };
 
-  const handleDirectUnlock = (e, row) => {
+  const handleToggleRowLock = (e, rowId) => {
     e.stopPropagation();
-    setUnlockedIds(prev => new Set(prev).add(row.id));
+    e.preventDefault();
+    setLockedIds(prev => {
+      const next = new Set(prev);
+      if (allUnlocked) {
+        if (next.has(rowId)) next.delete(rowId);
+        else next.add(rowId);
+      } else {
+        if (next.has(rowId)) next.delete(rowId);
+        else next.add(rowId);
+      }
+      return next;
+    });
   };
 
   return (
@@ -40,7 +61,7 @@ export default function TransactionsTable({
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <button
             type="button"
-            onClick={handleUnlockAll}
+            onClick={handleToggleAll}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -49,16 +70,16 @@ export default function TransactionsTable({
               borderRadius: '6px',
               fontSize: '0.8rem',
               fontWeight: 700,
-              background: '#ECFDF5',
-              color: '#065F46',
-              border: '1px solid #A7F3D0',
+              background: allUnlocked ? '#ECFDF5' : '#FFFBEB',
+              color: allUnlocked ? '#065F46' : '#B45309',
+              border: allUnlocked ? '1px solid #A7F3D0' : '1px solid #FDE68A',
               cursor: 'pointer',
               transition: 'all 0.15s ease'
             }}
-            title="Unlock all deed amounts instantly"
+            title="Toggle all price visibility (Unlimited)"
           >
-            <Unlock size={13} color="#059669" />
-            <span>Unlock All Prices (Unlimited)</span>
+            {allUnlocked ? <Unlock size={13} color="#059669" /> : <Lock size={13} color="#B45309" />}
+            <span>{allUnlocked ? '⚡ All Prices Unlocked (Unlimited)' : '🔒 Unlock All Prices'}</span>
           </button>
 
           <button 
@@ -100,25 +121,17 @@ export default function TransactionsTable({
               <th>Floor, Tower</th>
               <th>Unit</th>
               <th>Amount</th>
+              <th>Deed Record</th>
             </tr>
           </thead>
           <tbody>
             {rows.length > 0 ? (
               rows.slice(0, 5).map((row) => {
-                const isUnlocked = unlockedIds.has(row.id);
+                const isUnlocked = allUnlocked ? !lockedIds.has(row.id) : !lockedIds.has(row.id);
+                const displayAmt = row.amount || row.priceFormatted || '₹ 84.50 Lac';
 
                 return (
-                  <tr 
-                    key={row.id}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => {
-                      if (isUnlocked && onNavigate) {
-                        onNavigate('details', { transactionId: row.id });
-                      } else {
-                        setSelectedTxn(row);
-                      }
-                    }}
-                  >
+                  <tr key={row.id}>
                     <td>{row.date}</td>
                     <td>
                       <span className="sale-pill">{row.type}</span>
@@ -126,20 +139,62 @@ export default function TransactionsTable({
                     <td>{row.floorTower}</td>
                     <td style={{ fontWeight: 600 }}>{row.unit}</td>
                     <td>
-                      {isUnlocked ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span className="amount-text" style={{ color: '#15803D' }}>{row.amount}</span>
-                          <Unlock size={13} color="#15803D" />
-                        </div>
-                      ) : (
-                        <div 
-                          className="locked-amount-badge"
-                          title="Click to reveal price (Unlimited)"
-                          onClick={(e) => handleDirectUnlock(e, row)}
+                      <div 
+                        className="price-amount-cell"
+                        onClick={(e) => handleToggleRowLock(e, row.id)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '4px 9px',
+                          borderRadius: '6px',
+                          background: isUnlocked ? '#ECFDF5' : '#FEF3C7',
+                          border: isUnlocked ? '1px solid #A7F3D0' : '1px solid #FDE68A',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                        title={isUnlocked ? "Click to lock price" : "Click to unlock price"}
+                      >
+                        {isUnlocked ? (
+                          <>
+                            <span className="amount-text" style={{ color: '#065F46', fontWeight: 700 }}>
+                              {displayAmt}
+                            </span>
+                            <Unlock size={13} color="#059669" />
+                          </>
+                        ) : (
+                          <>
+                            <Lock size={12} color="#B45309" />
+                            <span style={{ fontSize: '0.8rem', color: '#B45309', fontWeight: 700 }}>
+                              •••••••••• (Unlock)
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      {onNavigate ? (
+                        <button
+                          type="button"
+                          onClick={() => onNavigate('details', { transactionId: row.id })}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#1D4ED8',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            padding: '2px 6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
                         >
-                          <Lock size={12} />
-                          <span>Unlock</span>
-                        </div>
+                          <span>View Deed</span>
+                          <ArrowRight size={12} />
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: '0.8rem', color: '#64748B' }}>Verified</span>
                       )}
                     </td>
                   </tr>
@@ -147,7 +202,7 @@ export default function TransactionsTable({
               })
             ) : (
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '24px', color: '#94A3B8' }}>
+                <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: '#94A3B8' }}>
                   No recent {activeTab} transactions registered.
                 </td>
               </tr>

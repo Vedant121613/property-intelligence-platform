@@ -10,7 +10,7 @@ export default function TransactionsModal({
   const [filterType, setFilterType] = useState('all');
   const [unitSearch, setUnitSearch] = useState('');
   const [unlockedIds, setUnlockedIds] = useState(new Set());
-  const [allUnlocked, setAllUnlocked] = useState(false);
+  const [allUnlocked, setAllUnlocked] = useState(true);
 
   if (!isOpen) return null;
 

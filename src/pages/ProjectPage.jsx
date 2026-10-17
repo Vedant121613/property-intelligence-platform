@@ -31,7 +31,7 @@ export default function ProjectPage({
   const [loading, setLoading] = useState(true);
   const [showAllTxnsModal, setShowAllTxnsModal] = useState(false);
   const [bhkFilter, setBhkFilter] = useState('all');
-  const [unlockedLastSold, setUnlockedLastSold] = useState(true);
+  const [unlockedLastSold, setUnlockedLastSold] = useState(false);
 
   useEffect(() => {
     let isMounted = true;

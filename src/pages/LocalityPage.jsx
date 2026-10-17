@@ -46,7 +46,7 @@ export default function LocalityPage({
     { label: cityName, target: { page: 'city', params: { cityId } } }
   ];
 
-  const [unlockAllPrices, setUnlockAllPrices] = useState(true);
+  const [unlockAllPrices, setUnlockAllPrices] = useState(false);
 
   return (
     <div>

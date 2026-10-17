@@ -9,35 +9,31 @@ export default function TransactionsTable({
   onNavigate
 }) {
   const [activeTab, setActiveTab] = useState('sale');
-  const [allUnlocked, setAllUnlocked] = useState(true);
-  const [lockedIds, setLockedIds] = useState(new Set());
+  const [allUnlocked, setAllUnlocked] = useState(false);
+  const [unlockedIds, setUnlockedIds] = useState(new Set());
   const [selectedTxn, setSelectedTxn] = useState(null);
 
   const rows = (activeTab === 'sale' ? transactions.sale : transactions.rent) || [];
 
   const handleUnlockSuccess = (txnId) => {
-    setLockedIds(prev => {
-      const next = new Set(prev);
-      next.delete(txnId);
-      return next;
-    });
+    setUnlockedIds(prev => new Set(prev).add(txnId));
     setSelectedTxn(null);
   };
 
   const handleToggleAll = () => {
     if (allUnlocked) {
       setAllUnlocked(false);
-      setLockedIds(new Set(rows.map(r => r.id)));
+      setUnlockedIds(new Set());
     } else {
       setAllUnlocked(true);
-      setLockedIds(new Set());
+      setUnlockedIds(new Set(rows.map(r => r.id)));
     }
   };
 
   const handleToggleRowLock = (e, rowId) => {
     e.stopPropagation();
     e.preventDefault();
-    setLockedIds(prev => {
+    setUnlockedIds(prev => {
       const next = new Set(prev);
       if (allUnlocked) {
         if (next.has(rowId)) next.delete(rowId);
@@ -127,7 +123,7 @@ export default function TransactionsTable({
           <tbody>
             {rows.length > 0 ? (
               rows.slice(0, 5).map((row) => {
-                const isUnlocked = allUnlocked ? !lockedIds.has(row.id) : !lockedIds.has(row.id);
+                const isUnlocked = allUnlocked || unlockedIds.has(row.id);
                 const displayAmt = row.amount || row.priceFormatted || '₹ 84.50 Lac';
 
                 return (
@@ -153,7 +149,7 @@ export default function TransactionsTable({
                           cursor: 'pointer',
                           transition: 'all 0.15s ease'
                         }}
-                        title={isUnlocked ? "Click to lock price" : "Click to unlock price"}
+                        title={isUnlocked ? "Click to lock price" : "Click to unlock price directly"}
                       >
                         {isUnlocked ? (
                           <>
@@ -166,7 +162,7 @@ export default function TransactionsTable({
                           <>
                             <Lock size={12} color="#B45309" />
                             <span style={{ fontSize: '0.8rem', color: '#B45309', fontWeight: 700 }}>
-                              •••••••••• (Unlock)
+                              Unlock Price
                             </span>
                           </>
                         )}

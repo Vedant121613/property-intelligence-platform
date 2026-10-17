@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { ChevronRight, Lock, Unlock } from 'lucide-react';
 
-export default function ProjectCard({ project, onClick, defaultUnlocked = true }) {
+export default function ProjectCard({ project, onClick, defaultUnlocked = false }) {
   const [unlocked, setUnlocked] = useState(defaultUnlocked);
+
+  React.useEffect(() => {
+    setUnlocked(defaultUnlocked);
+  }, [defaultUnlocked]);
 
   const formattedCount = project.saleTxns === 0 
     ? '00' 
@@ -32,7 +36,7 @@ export default function ProjectCard({ project, onClick, defaultUnlocked = true }
   const priceText = getDisplayPrice();
 
   const handleCardClick = (e) => {
-    // If the click is on or inside the price toggle, don't trigger card navigation!
+    // If the click is on or inside the price toggle button, don't trigger card navigation!
     if (e.target.closest('.price-badge-interactive') || e.target.closest('button')) {
       return;
     }
@@ -59,7 +63,8 @@ export default function ProjectCard({ project, onClick, defaultUnlocked = true }
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span className="badge-txns">{formattedCount} sale txns</span>
           
-          <div
+          <button
+            type="button"
             className="price-badge-interactive"
             onClick={(e) => {
               e.stopPropagation();
@@ -74,17 +79,17 @@ export default function ProjectCard({ project, onClick, defaultUnlocked = true }
               fontWeight: 700,
               color: unlocked ? '#0F766E' : '#B45309',
               background: unlocked ? '#F0FDFA' : '#FEF3C7',
-              padding: '3px 8px',
+              padding: '4px 9px',
               borderRadius: '6px',
               border: unlocked ? '1px solid #CCFBF1' : '1px solid #FDE68A',
               cursor: 'pointer',
               transition: 'all 0.15s ease'
             }}
-            title={unlocked ? "Price unlocked (Click to lock)" : "Price locked (Click to unlock)"}
+            title={unlocked ? "Price unlocked (Click to lock)" : "Price locked (Click to unlock directly)"}
           >
             {unlocked ? <Unlock size={12} color="#0D9488" /> : <Lock size={12} color="#B45309" />}
-            <span>{unlocked ? priceText : '••••••••••'}</span>
-          </div>
+            <span>{unlocked ? priceText : 'Unlock Price'}</span>
+          </button>
 
           {project.rera && (
             <span style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 600 }}>

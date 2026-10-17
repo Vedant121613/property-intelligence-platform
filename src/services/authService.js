@@ -6,8 +6,7 @@
  * and server-side access-token verification.
  */
 
-const API_ROOT = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/+$/, '');
-const API_BASE = `${API_ROOT}/api`;
+import { API_ROOT, API_BASE } from './apiConfig.js';
 
 /**
  * Format mobile number to 91XXXXXXXXXX (country code without +)

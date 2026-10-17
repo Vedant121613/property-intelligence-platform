@@ -33,19 +33,23 @@ export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     const query = searchVal.toLowerCase();
-    if (query.includes('heera')) {
+    if (query.includes('kharadi') || query.includes('vj') || query.includes('indiworks') || query.includes('palladio')) {
+      onNavigate('locality', { cityId: 'pune', localityId: 'kharadi' });
+    } else if (query.includes('heera')) {
       onNavigate('project', { cityId: 'pune', localityId: 'saswad-road', projectId: 'heera-solitaire' });
-    } else if (query.includes('saswad') || query.includes('pune') || query.includes('manchar')) {
-      onNavigate('locality', { cityId: 'pune', localityId: 'saswad-road' });
     } else {
-      onNavigate('city', { cityId: 'pune' });
+      onNavigate('locality', { cityId: 'pune', localityId: 'kharadi' });
     }
   };
 
   const handleQuickChipClick = (term) => {
     setSearchVal(term);
     onSelectCity('pune');
-    onNavigate('city', { cityId: 'pune' });
+    if (term.toLowerCase().includes('kharadi')) {
+      onNavigate('locality', { cityId: 'pune', localityId: 'kharadi' });
+    } else {
+      onNavigate('city', { cityId: 'pune' });
+    }
   };
 
   return (
@@ -142,7 +146,7 @@ export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
           {/* Popular Fast Search Chips */}
           <div className="quick-search-chips">
             <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 600 }}>Popular Searches:</span>
-            {['Haveli Taluka', 'Baner', 'Mulshi Taluka', 'Wagholi', 'Kothrud', 'Mawal Taluka'].map(chip => (
+            {['Kharadi', 'Haveli Taluka', 'Baner', 'Wagholi', 'Kothrud', 'Mawal Taluka'].map(chip => (
               <button
                 key={chip}
                 type="button"
@@ -246,16 +250,16 @@ export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
               <button 
                 type="button" 
                 className="btn-primary-blue-outline"
-                onClick={() => onNavigate('transactions', { projectId: 'y-square', cityId: 'mumbai' })}
+                onClick={() => onNavigate('transactions', { projectId: 'vj-indiworks-kharadi-central', cityId: 'pune' })}
               >
                 View Sample Deeds
               </button>
               <button 
                 type="button" 
                 className="btn-secondary-white"
-                onClick={() => onNavigate('locality', { cityId: 'pune', localityId: 'saswad-road' })}
+                onClick={() => onNavigate('locality', { cityId: 'pune', localityId: 'kharadi' })}
               >
-                Browse Pune Localities
+                Browse Kharadi Localities
               </button>
             </div>
           </div>
@@ -382,7 +386,7 @@ export default function HomePage({ onNavigate, currentCity, onSelectCity }) {
               <div 
                 key={txn.id} 
                 className="deed-card"
-                onClick={() => onNavigate('transactions', { projectId: 'y-square', cityId: 'mumbai' })}
+                onClick={() => onNavigate('project', { projectId: txn.projectId || 'vj-indiworks-kharadi-central', cityId: 'pune', localityId: 'kharadi' })}
               >
                 <div>
                   <div className="deed-info-date">{txn.soldDate}</div>

@@ -73,8 +73,7 @@ export default function TransactionsPage({
   const handleUnlockSuccess = (txnId) => {
     setUnlockedTxnIds(prev => new Set(prev).add(txnId));
     setSelectedTxnForUnlock(null);
-    // Proceed to detailed view (Screenshot 5)
-    onNavigate('details', { transactionId: txnId, projectId });
+    // Directly show price in place instead of redirecting
   };
 
   return (
@@ -495,18 +494,16 @@ export default function TransactionsPage({
                         return (
                           <tr 
                             key={txn.id}
-                            style={{ cursor: 'pointer' }}
-                            onClick={() => {
-                              if (isUnlocked) {
-                                onNavigate('details', { transactionId: txn.id, projectId });
-                              } else {
-                                handleUnlockClick(txn);
-                              }
-                            }}
                           >
                             <td style={{ whiteSpace: 'nowrap' }}>{txn.date}</td>
                             <td>
-                              <div style={{ fontWeight: 600, color: '#1E293B' }}>{txn.project}</div>
+                              <div 
+                                style={{ fontWeight: 600, color: '#1D4ED8', cursor: 'pointer' }}
+                                onClick={() => onNavigate('details', { transactionId: txn.id, projectId })}
+                                title="Click to view full deed certificate"
+                              >
+                                {txn.project}
+                              </div>
                               <div style={{ fontSize: '0.75rem', color: '#64748B' }}>{txn.locality}</div>
                             </td>
                             <td>
@@ -515,26 +512,51 @@ export default function TransactionsPage({
                             <td>{txn.floorTower}</td>
                             <td style={{ fontWeight: 700 }}>{txn.unit}</td>
                             <td>
-                              {/* Amount contains lock icon. Clicking opens free checkbox unlock flow! */}
                               {isUnlocked ? (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <span className="amount-text" style={{ color: '#15803D' }}>
+                                <div 
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setUnlockedTxnIds(prev => {
+                                      const next = new Set(prev);
+                                      next.delete(txn.id);
+                                      return next;
+                                    });
+                                  }}
+                                  title="Click to lock price"
+                                >
+                                  <span className="amount-text" style={{ color: '#15803D', fontWeight: 700 }}>
                                     {txn.displayAmount}
                                   </span>
                                   <Unlock size={14} color="#15803D" />
                                 </div>
                               ) : (
-                                <div 
+                                <button 
+                                  type="button"
                                   className="locked-amount-badge"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleUnlockClick(txn);
+                                    e.preventDefault();
+                                    setUnlockedTxnIds(prev => new Set(prev).add(txn.id));
                                   }}
-                                  title="Click to unlock this transaction for free"
+                                  title="Click to unlock price directly"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #FDE68A',
+                                    background: '#FEF3C7',
+                                    color: '#B45309',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer'
+                                  }}
                                 >
-                                  <Lock size={13} />
-                                  <span>Unlock</span>
-                                </div>
+                                  <Lock size={13} color="#B45309" />
+                                  <span>Unlock Price</span>
+                                </button>
                               )}
                             </td>
                           </tr>
@@ -561,15 +583,7 @@ export default function TransactionsPage({
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
-                        cursor: 'pointer',
                         transition: 'transform 0.15s, border-color 0.15s'
-                      }}
-                      onClick={() => {
-                        if (isUnlocked) {
-                          onNavigate('details', { transactionId: txn.id, projectId });
-                        } else {
-                          handleUnlockClick(txn);
-                        }
                       }}
                     >
                       <div>
@@ -578,7 +592,11 @@ export default function TransactionsPage({
                           <span className="sale-pill">{txn.type}</span>
                         </div>
 
-                        <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1E293B' }}>
+                        <div 
+                          style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1E293B', cursor: 'pointer' }}
+                          onClick={() => onNavigate('details', { transactionId: txn.id, projectId })}
+                          title="Click to view deed record"
+                        >
                           Unit {txn.unit} • Floor {txn.floorTower}
                         </div>
                         <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '2px' }}>
@@ -589,21 +607,48 @@ export default function TransactionsPage({
                       <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F1F5F9' }}>
                         <span style={{ fontSize: '0.75rem', color: '#64748B' }}>Registered Deed:</span>
                         {isUnlocked ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div 
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUnlockedTxnIds(prev => {
+                                const next = new Set(prev);
+                                next.delete(txn.id);
+                                return next;
+                              });
+                            }}
+                            title="Click to lock price"
+                          >
                             <span style={{ fontWeight: 800, color: '#15803D', fontSize: '0.95rem' }}>{txn.displayAmount}</span>
                             <Unlock size={14} color="#15803D" />
                           </div>
                         ) : (
-                          <div 
+                          <button 
+                            type="button"
                             className="locked-amount-badge"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleUnlockClick(txn);
+                              e.preventDefault();
+                              setUnlockedTxnIds(prev => new Set(prev).add(txn.id));
+                            }}
+                            title="Click to unlock price directly"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              padding: '4px 10px',
+                              borderRadius: '6px',
+                              border: '1px solid #FDE68A',
+                              background: '#FEF3C7',
+                              color: '#B45309',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                              cursor: 'pointer'
                             }}
                           >
-                            <Lock size={12} />
-                            <span>Free Unlock</span>
-                          </div>
+                            <Lock size={12} color="#B45309" />
+                            <span>Unlock Price</span>
+                          </button>
                         )}
                       </div>
                     </div>

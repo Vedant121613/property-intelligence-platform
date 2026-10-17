@@ -31,7 +31,7 @@ function AppContent() {
     } else if (path.startsWith('/transactions')) {
       return {
         page: 'transactions',
-        params: { projectId: 'heera-solitaire', cityId: 'pune' }
+        params: { projectId: 'vj-indiworks-kharadi-central', cityId: 'pune' }
       };
     } else if (path.startsWith('/project/')) {
       const parts = path.split('/').filter(Boolean);
@@ -39,8 +39,8 @@ function AppContent() {
         page: 'project',
         params: {
           cityId: parts[1] || 'pune',
-          localityId: parts[2] || 'saswad-road',
-          projectId: parts[3] || 'heera-solitaire'
+          localityId: parts[2] || 'kharadi',
+          projectId: parts[3] || 'vj-indiworks-kharadi-central'
         }
       };
     } else if (path.startsWith('/location/')) {
@@ -49,7 +49,7 @@ function AppContent() {
         page: 'locality',
         params: {
           cityId: parts[1] || 'pune',
-          localityId: parts[2] || 'saswad-road'
+          localityId: parts[2] || 'kharadi'
         }
       };
     } else if (path.startsWith('/city/')) {
@@ -83,15 +83,15 @@ function AppContent() {
     } else if (page === 'profile') {
       targetUrl = '/profile';
     } else if (page === 'transactions') {
-      targetUrl = `/transactions?project=${params.projectId || 'y-square'}`;
+      targetUrl = `/transactions?project=${params.projectId || 'vj-indiworks-kharadi-central'}`;
     } else if (page === 'details') {
-      targetUrl = `/details/${params.transactionId || '11089052'}`;
+      targetUrl = `/details/${params.transactionId || 'kh-3861'}`;
     } else if (page === 'city') {
       targetUrl = `/city/${params.cityId || currentCity}`;
     } else if (page === 'locality') {
-      targetUrl = `/location/${params.cityId || currentCity}/${params.localityId || 'saswad-road'}`;
+      targetUrl = `/location/${params.cityId || currentCity}/${params.localityId || 'kharadi'}`;
     } else if (page === 'project') {
-      targetUrl = `/project/${params.cityId || currentCity}/${params.localityId || 'saswad-road'}/${params.projectId || 'heera-solitaire'}`;
+      targetUrl = `/project/${params.cityId || currentCity}/${params.localityId || 'kharadi'}/${params.projectId || 'vj-indiworks-kharadi-central'}`;
     }
 
     try {
@@ -180,7 +180,7 @@ function AppContent() {
         {route.page === 'locality' && (
           <LocalityPage
             cityId={route.params.cityId || currentCity}
-            localityId={route.params.localityId || 'saswad-road'}
+            localityId={route.params.localityId || 'kharadi'}
             onNavigate={navigateTo}
           />
         )}
@@ -188,11 +188,11 @@ function AppContent() {
         {route.page === 'project' && (
           <ProjectPage
             cityId={route.params.cityId || currentCity}
-            localityId={route.params.localityId || 'saswad-road'}
-            projectId={route.params.projectId || 'heera-solitaire'}
-            talukaId={route.params.talukaId}
-            villageName={route.params.villageName}
-            talukaName={route.params.talukaName}
+            localityId={route.params.localityId || 'kharadi'}
+            projectId={route.params.projectId || 'vj-indiworks-kharadi-central'}
+            talukaId={route.params.talukaId || 'haveli'}
+            villageName={route.params.villageName || 'Kharadi'}
+            talukaName={route.params.talukaName || 'Haveli'}
             onNavigate={navigateTo}
           />
         )}

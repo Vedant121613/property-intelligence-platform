@@ -44,36 +44,40 @@ export const DURATION_FILTERS = [
 
 export const HOMEPAGE_RECENT_TRANSACTIONS = [
   {
-    id: 'hp-1',
-    soldDate: 'Sold on 12 Feb 2024',
-    amount: '₹6.74 Cr',
-    locality: 'Bandra West, Mumbai',
-    unit: 'Flat No. 1204',
-    carpetArea: '1,450 sq.ft'
+    id: 'kh-3861',
+    soldDate: 'Sold on 21 Feb 2026',
+    amount: '₹49.96 Lac',
+    locality: 'Kharadi, Pune',
+    unit: 'Unit #529',
+    carpetArea: '16.41 sq.m',
+    projectId: 'vj-indiworks-kharadi-central'
   },
   {
-    id: 'hp-2',
-    soldDate: 'Sold on 27 Feb 2024',
-    amount: '₹1.85 Cr',
-    locality: 'Baner, Pune',
-    unit: 'Flat No. 804',
-    carpetArea: '1,320 sq.ft'
+    id: 'kh-palladio-1',
+    soldDate: 'Sold on 11 Apr 2025',
+    amount: '₹1.12 Cr',
+    locality: 'Kharadi, Pune',
+    unit: 'Tower B • Flat 402',
+    carpetArea: '782 sq.ft',
+    projectId: 'palladio-kharadi-central-phase-2'
   },
   {
-    id: 'hp-3',
-    soldDate: 'Sold on 26 Feb 2024',
-    amount: '₹13.70 Cr',
-    locality: 'Worli, Mumbai',
-    unit: 'Flat No. 3401',
-    carpetArea: '3,200 sq.ft'
+    id: 'kh-vj-2',
+    soldDate: 'Sold on 20 Jun 2025',
+    amount: '₹39.80 Lac',
+    locality: 'Kharadi, Pune',
+    unit: 'Unit #208',
+    carpetArea: '486 sq.ft',
+    projectId: 'vj-central-avenue-kharadi'
   },
   {
-    id: 'hp-4',
-    soldDate: 'Sold on 22 Feb 2024',
-    amount: '₹4.79 Cr',
-    locality: 'Koregaon Park, Pune',
-    unit: 'Penthouse 1102',
-    carpetArea: '2,150 sq.ft'
+    id: 'kh-gera-1',
+    soldDate: 'Sold on 14 Jan 2026',
+    amount: '₹94.00 Lac',
+    locality: 'Kharadi, Pune',
+    unit: 'Wing A • Flat 1102',
+    carpetArea: '950 sq.ft',
+    projectId: 'vj-indiworks-kharadi-central'
   }
 ];
 

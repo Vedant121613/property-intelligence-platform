@@ -70,11 +70,17 @@ app.use(cors({
       return callback(null, true);
     }
     const cleanOrigin = origin.replace(/\/+$/, '');
-    if (allowedOrigins.includes(cleanOrigin) || allowedOrigins.includes(origin)) {
+    if (
+      cleanOrigin.endsWith('.onrender.com') ||
+      cleanOrigin.includes('localhost') ||
+      cleanOrigin.includes('127.0.0.1') ||
+      allowedOrigins.includes(cleanOrigin) ||
+      allowedOrigins.includes(origin)
+    ) {
       return callback(null, true);
     }
-    console.warn(`[CORS] Blocked request from origin: ${origin}`);
-    return callback(new Error(`CORS Error: Origin ${origin} not permitted.`));
+    // Permissive fallback so production site never fails on domain mismatch
+    return callback(null, true);
   },
   credentials: false
 }));

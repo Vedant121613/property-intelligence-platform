@@ -190,7 +190,6 @@ export default function TransactionsTable({
               <th>Floor, Tower</th>
               <th>Unit</th>
               <th>Amount</th>
-              <th>Deed Record</th>
             </tr>
           </thead>
           <tbody>
@@ -220,10 +219,11 @@ export default function TransactionsTable({
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '6px',
-                          padding: '4px 9px',
+                          padding: '4px 10px',
                           borderRadius: '6px',
-                          background: isUnlocked ? '#ECFDF5' : '#FEF3C7',
-                          border: isUnlocked ? '1px solid #A7F3D0' : '1px solid #FDE68A',
+                          background: isUnlocked ? '#ECFDF5' : '#EFF6FF',
+                          border: isUnlocked ? '1px solid #A7F3D0' : '1px solid #BFDBFE',
+                          color: isUnlocked ? '#065F46' : '#1D4ED8',
                           cursor: 'pointer',
                           transition: 'all 0.15s ease'
                         }}
@@ -238,45 +238,20 @@ export default function TransactionsTable({
                           </>
                         ) : (
                           <>
-                            <Lock size={12} color="#B45309" />
-                            <span style={{ fontSize: '0.8rem', color: '#B45309', fontWeight: 700 }}>
+                            <Lock size={12} color="#1D4ED8" />
+                            <span style={{ fontSize: '0.8rem', color: '#1D4ED8', fontWeight: 700 }}>
                               Unlock Price
                             </span>
                           </>
                         )}
                       </div>
                     </td>
-                    <td>
-                      {onNavigate ? (
-                        <button
-                          type="button"
-                          onClick={() => onNavigate('details', { transactionId: row.id })}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#1D4ED8',
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            padding: '2px 6px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}
-                        >
-                          <span>View Deed</span>
-                          <ArrowRight size={12} />
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: '0.8rem', color: '#64748B' }}>Verified</span>
-                      )}
-                    </td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: '#94A3B8' }}>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '24px', color: '#94A3B8' }}>
                   No recent {activeTab} transactions registered.
                 </td>
               </tr>

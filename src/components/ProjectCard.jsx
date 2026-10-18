@@ -53,26 +53,11 @@ export default function ProjectCard({ project, onClick, defaultUnlocked = false 
       return;
     }
 
-    // 1. If not authenticated, prompt sign up to claim 3 free trials
-    if (!isAuthenticated) {
-      openAuthModal('signup', async () => {
-        const res = await unlockTxn(project.id);
-        if (res.unlocked || res.success) setUnlocked(true);
-      });
-      return;
-    }
-
-    // 2. If out of attempts and not paid, open plan prompt / modal
-    if (!isPaymentDone && freeAttemptsLeft <= 0) {
-      if (onClick) onClick(); // Navigate to project page which shows plan prompt
-      return;
-    }
-
-    // 3. Authenticated: unlock directly in place!
-    const res = await unlockTxn(project.id);
-    if (res.unlocked || res.success) {
-      setUnlocked(true);
-    }
+    // Unlimited access: directly toggle unlock in place!
+    setUnlocked(true);
+    try {
+      await unlockTxn(project.id);
+    } catch {}
   };
 
   return (

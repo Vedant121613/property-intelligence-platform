@@ -730,50 +730,24 @@ app.get('/api/pune/projects', async (req, res) => {
   try {
     const { taluka, village, search, limit = 500, offset = 0 } = req.query;
 
-    // Special handler: If village is Kharadi
+    // Special handler: If village is Kharadi, strictly return the authentic projects from project gandhiq.csv
     if (village && (village.toLowerCase() === 'kharadi' || village.toLowerCase() === 'kharadi-pune')) {
-      try {
-        let kSql = `
-          SELECT 
-            id,
-            id AS "projectId",
-            name,
-            slug,
-            rera_id AS rera,
-            developer,
-            sale_txns AS "saleTxns",
-            avg_price AS "avgPrice",
-            quoted_pricing AS "quotedPricing",
-            bhks,
-            completion,
-            address,
-            pin_code AS pin,
-            locality,
-            taluka,
-            city
-          FROM kharadi_projects
-          WHERE 1=1
-        `;
-        const kParams = [];
-        if (search) {
-          kParams.push(`%${search}%`);
-          kSql += ` AND (name ILIKE $${kParams.length} OR rera_id ILIKE $${kParams.length} OR developer ILIKE $${kParams.length})`;
-        }
-        kSql += ` ORDER BY sale_txns DESC LIMIT $${kParams.length + 1} OFFSET $${kParams.length + 2}`;
-        kParams.push(parseInt(limit, 10), parseInt(offset, 10));
-
-        const kResult = await query(kSql, kParams);
-        if (kResult.rows && kResult.rows.length > 0) {
-          return res.json({ 
-            success: true, 
-            count: kResult.rows.length, 
-            locality: 'Kharadi',
-            projects: kResult.rows 
-          });
-        }
-      } catch (kErr) {
-        console.warn('Note: Fallback to local kharadiData for /api/pune/projects:', kErr.message);
+      let fallbackList = kharadiFallback?.projects || [];
+      if (search) {
+        const s = search.toLowerCase();
+        fallbackList = fallbackList.filter(p => 
+          (p.name && p.name.toLowerCase().includes(s)) || 
+          (p.societyName && p.societyName.toLowerCase().includes(s)) ||
+          (p.reraNumbers && p.reraNumbers.toLowerCase().includes(s))
+        );
       }
+      return res.json({
+        success: true,
+        count: fallbackList.length,
+        locality: 'Kharadi',
+        projects: fallbackList
+      });
+    }
 
       // Kharadi fallback
       let fallbackList = kharadiFallback?.projects || [];

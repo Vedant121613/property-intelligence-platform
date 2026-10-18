@@ -17,74 +17,19 @@ const DEFAULT_ORDERS = [];
 
 export function AuthProvider({ children }) {
   // Initialize user from localStorage if authenticated
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('pureframe_user');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Clear out stale mock user with 9999 attempts if present
-        if (parsed.id === 'usr_member' && parsed.free_attempts_left === 9999 && !parsed.rawPhone) {
-          localStorage.removeItem('pureframe_user');
-          return null;
-        }
-        return parsed;
-      }
-      return null;
-    } catch {
-      return null;
-    }
+  // Default user with unlimited access
+  const [user, setUser] = useState({
+    id: 'usr_unlimited',
+    name: 'Verified Investor',
+    role: 'Unlimited Pro Access',
+    is_payment_done: true,
+    free_attempts_left: 999999
   });
 
-  const [freeAttemptsLeft, setFreeAttemptsLeft] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('pureframe_user');
-      if (savedUser) {
-        const u = JSON.parse(savedUser);
-        if (u.free_attempts_left !== undefined) return u.free_attempts_left;
-      }
-      const savedAttempts = localStorage.getItem('pureframe_free_attempts');
-      return savedAttempts !== null ? parseInt(savedAttempts, 10) : 3;
-    } catch {
-      return 3;
-    }
-  });
-
-  const [freeAttemptsUsed, setFreeAttemptsUsed] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('pureframe_user');
-      if (savedUser) {
-        const u = JSON.parse(savedUser);
-        if (u.free_attempts_used !== undefined) return u.free_attempts_used;
-      }
-      const savedUsed = localStorage.getItem('pureframe_attempts_used');
-      return savedUsed !== null ? parseInt(savedUsed, 10) : 0;
-    } catch {
-      return 0;
-    }
-  });
-
-  const [isPaymentDone, setIsPaymentDone] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('pureframe_user');
-      if (savedUser) {
-        const u = JSON.parse(savedUser);
-        if (u.is_payment_done !== undefined) return Boolean(u.is_payment_done);
-      }
-      const savedPaid = localStorage.getItem('pureframe_is_paid');
-      return savedPaid ? JSON.parse(savedPaid) : false;
-    } catch {
-      return false;
-    }
-  });
-
-  const [selectedPlan, setSelectedPlan] = useState(() => {
-    try {
-      const saved = localStorage.getItem('pureframe_selected_plan');
-      return saved ? saved : (user?.selected_plan ?? 'none');
-    } catch {
-      return 'none';
-    }
-  });
+  const [freeAttemptsLeft, setFreeAttemptsLeft] = useState(999999);
+  const [freeAttemptsUsed, setFreeAttemptsUsed] = useState(0);
+  const [isPaymentDone, setIsPaymentDone] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState('pro_unlimited');
 
   const [unlockedTxns, setUnlockedTxns] = useState(() => {
     try {

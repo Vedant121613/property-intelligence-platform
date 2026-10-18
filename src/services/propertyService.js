@@ -96,6 +96,18 @@ export function getPuneVillages(talukaSlug) {
  */
 export async function fetchPuneProjects(talukaSlug, villageSlug, search = '') {
   if (!talukaSlug || !villageSlug) return [];
+  const vClean = villageSlug.toLowerCase();
+  if (vClean === 'kharadi' || vClean.includes('kharadi')) {
+    let list = kharadiData.projects || [];
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(p => 
+        p.name.toLowerCase().includes(q) || 
+        (p.societyName && p.societyName.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }
   const dbData = await dbGetPuneProjects(talukaSlug, villageSlug, search);
   if (dbData && dbData.length > 0) return dbData;
   return getPuneProjects(talukaSlug, villageSlug);

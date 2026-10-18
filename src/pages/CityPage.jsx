@@ -75,12 +75,19 @@ export default function CityPage({ cityId = 'pune', onNavigate }) {
     return () => { isMounted = false; };
   }, [selectedTaluka]);
 
-  // 3. Fetch Projects from PostgreSQL database when village is selected
+  // 3. Fetch Projects when village is selected
   useEffect(() => {
     let isMounted = true;
     if (selectedTaluka && selectedVillage) {
+      const isKharadi = selectedVillage.slug === 'kharadi' || selectedVillage.slug.includes('kharadi');
+      if (isKharadi) {
+        // Strictly use authentic projects from project gandhiq.csv (no async database override)
+        setProjects(getPuneProjects('haveli', 'kharadi'));
+        setIsLevelLoading(false);
+        return;
+      }
+
       setIsLevelLoading(true);
-      // Immediate fallback to prevent blank render
       setProjects(getPuneProjects(selectedTaluka.slug, selectedVillage.slug));
       fetchPuneProjects(selectedTaluka.slug, selectedVillage.slug)
         .then(res => {

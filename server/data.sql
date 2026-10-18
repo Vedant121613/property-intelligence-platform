@@ -49,6 +49,7 @@ CREATE INDEX IF NOT EXISTS idx_prop_records_id ON property_records(record_id);
 
 DELETE FROM pune_projects WHERE village_slug = 'kharadi';
 DELETE FROM property_records WHERE locality = 'Kharadi';
+DROP TABLE IF EXISTS kharadi_projects CASCADE;
 
 INSERT INTO pune_projects (id, project_id, project_name, project_slug, rera_id, registration_number, taluka, taluka_slug, village, village_slug, address, locality, pin_code)
 VALUES

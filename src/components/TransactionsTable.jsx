@@ -31,25 +31,12 @@ export default function TransactionsTable({
   };
 
   const handleToggleAll = () => {
-    if (isPaymentDone) {
-      if (allUnlocked) {
-        setAllUnlocked(false);
-        setUnlockedIds(new Set());
-      } else {
-        setAllUnlocked(true);
-        setUnlockedIds(new Set(rows.map(r => r.id)));
-      }
-      return;
-    }
-
-    if (!isAuthenticated) {
-      openAuthModal('signup');
-      return;
-    }
-
-    // Free tier: Prompt plan selection for bulk unlock
-    if (rows.length > 0) {
-      setSelectedTxn(rows[0]);
+    if (allUnlocked) {
+      setAllUnlocked(false);
+      setUnlockedIds(new Set());
+    } else {
+      setAllUnlocked(true);
+      setUnlockedIds(new Set(rows.map(r => r.id)));
     }
   };
 
@@ -59,7 +46,7 @@ export default function TransactionsTable({
 
     const isCurrentlyUnlocked = allUnlocked || unlockedIds.has(row.id);
 
-    // 1. If currently displaying the unlocked price, toggle off (lock)
+    // If currently displaying the unlocked price, toggle off (lock)
     if (isCurrentlyUnlocked) {
       setUnlockedIds(prev => {
         const next = new Set(prev);
@@ -69,36 +56,11 @@ export default function TransactionsTable({
       return;
     }
 
-    // 2. If already unlocked in user account, reveal directly in place without consuming a trial
-    if (isTxnUnlocked(row.id)) {
-      setUnlockedIds(prev => new Set(prev).add(row.id));
-      return;
-    }
-
-    // 3. If not logged in, prompt sign in or sign up to claim 3 free trials
-    if (!isAuthenticated) {
-      openAuthModal('signup', async () => {
-        const res = await unlockTxn(row.id);
-        if (res.unlocked || res.success) {
-          setUnlockedIds(prev => new Set(prev).add(row.id));
-        }
-      });
-      return;
-    }
-
-    // 4. If out of attempts and not paid, open plan modal
-    if (!isPaymentDone && freeAttemptsLeft <= 0) {
-      setSelectedTxn(row);
-      return;
-    }
-
-    // 5. Authenticated with attempts remaining or paid: unlock in place!
-    const res = await unlockTxn(row.id);
-    if (res.unlocked || res.success) {
-      setUnlockedIds(prev => new Set(prev).add(row.id));
-    } else if (res.limitReached) {
-      setSelectedTxn(row);
-    }
+    // Unlimited access: reveal directly in place!
+    setUnlockedIds(prev => new Set(prev).add(row.id));
+    try {
+      await unlockTxn(row.id);
+    } catch {}
   };
 
   return (

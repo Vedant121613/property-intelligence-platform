@@ -47,25 +47,10 @@ export default function TransactionsModal({
       return;
     }
 
-    if (isTxnUnlocked(id)) {
-      setUnlockedIds(prev => new Set(prev).add(id));
-      return;
-    }
-
-    if (!isAuthenticated) {
-      openAuthModal('signup', async () => {
-        const res = await unlockTxn(id);
-        if (res.unlocked || res.success) {
-          setUnlockedIds(prev => new Set(prev).add(id));
-        }
-      });
-      return;
-    }
-
-    const res = await unlockTxn(id);
-    if (res.unlocked || res.success) {
-      setUnlockedIds(prev => new Set(prev).add(id));
-    }
+    setUnlockedIds(prev => new Set(prev).add(id));
+    try {
+      await unlockTxn(id);
+    } catch {}
   };
 
   const handleToggleAll = () => {

@@ -376,47 +376,25 @@ export default function Navbar({
               </div>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => openAuthModal('signin')}
-                  className="desktop-nav-only"
+                <div
                   style={{
                     padding: '6px 14px',
                     borderRadius: '8px',
-                    border: '1px solid #CBD5E1',
-                    background: '#FFFFFF',
-                    color: '#1E293B',
-                    fontSize: '0.825rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  Sign In
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => openAuthModal('signup')}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: 'var(--brand-gradient)',
-                    color: '#FFFFFF',
+                    border: '1px solid #A7F3D0',
+                    background: '#ECFDF5',
+                    color: '#047857',
                     fontSize: '0.825rem',
                     fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
                     whiteSpace: 'nowrap'
                   }}
+                  title="Unlimited Free Access to all Kharadi registered deeds & prices"
                 >
-                  <Sparkles size={13} />
-                  <span>Sign Up (3 Free)</span>
-                </button>
+                  <Sparkles size={13} color="#059669" />
+                  <span>Unlimited Access</span>
+                </div>
 
                 {/* Mobile Drawer Trigger for Guests */}
                 <button

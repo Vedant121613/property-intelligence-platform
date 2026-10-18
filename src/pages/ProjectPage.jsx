@@ -172,21 +172,10 @@ export default function ProjectPage({
                     setUnlockedLastSold(false);
                     return;
                   }
-                  if (!isAuthenticated) {
-                    openAuthModal('signup', async () => {
-                      const res = await unlockTxn('last-sold-' + project.id);
-                      if (res.unlocked || res.success) setUnlockedLastSold(true);
-                    });
-                    return;
-                  }
-                  if (!isPaymentDone && freeAttemptsLeft <= 0) {
-                    setShowAllTxnsModal(true);
-                    return;
-                  }
-                  const res = await unlockTxn('last-sold-' + project.id);
-                  if (res.unlocked || res.success) {
-                    setUnlockedLastSold(true);
-                  }
+                  setUnlockedLastSold(true);
+                  try {
+                    await unlockTxn('last-sold-' + project.id);
+                  } catch {}
                 }}
                 style={{
                   display: 'inline-flex',

@@ -197,34 +197,91 @@ const rawContent = fs.readFileSync(csvPath, 'utf8');
 const rows = parseCSV(rawContent);
 console.log(`Parsed ${rows.length} total rows.`);
 
+// Intelligent Header Detection & Dynamic Column Mapping
+let startRow = 0;
+let colMap = {
+  id: 0,
+  society: 43,
+  bldg: 44,
+  desc: 14,
+  price: 18,
+  date: 10,
+  docNo: 8,
+  purchaser: 13,
+  seller: 12,
+  flat: 45,
+  carpetArea: 21,
+  sro: 11,
+  docType: 9,
+  rera: 7
+};
+
+if (rows.length > 0) {
+  const firstCell = String(rows[0][0] || '').trim().toLowerCase();
+  const isFirstCellNumeric = /^\d+$/.test(firstCell);
+
+  if (!isFirstCellNumeric) {
+    const firstRow = rows[0].map(h => String(h || '').trim().toLowerCase());
+    const hasHeaders = firstRow.some(h => 
+      h === 'society' || h === 'society_name' || h === 'project' || h === 'project_name' ||
+      h === 'price' || h === 'amount' || h === 'purchaser' || h === 'buyer' ||
+      h === 'date' || h === 'reg_date' || h === 'doc_no' || h === 'id' || h === 'sr_no' ||
+      h.includes('society') || h.includes('project_name')
+    );
+
+    if (hasHeaders) {
+      console.log('Header row detected in CSV! Dynamically mapping columns...');
+      startRow = 1;
+      firstRow.forEach((colName, idx) => {
+        if (colName.includes('society') || colName.includes('project')) colMap.society = idx;
+        else if (colName.includes('building') || colName.includes('bldg') || colName.includes('wing')) colMap.bldg = idx;
+        else if (colName.includes('price') || colName.includes('amount') || colName.includes('consideration') || colName.includes('market_value')) colMap.price = idx;
+        else if (colName.includes('reg_date') || (colName.includes('date') && !colName.includes('created'))) colMap.date = idx;
+        else if (colName.includes('doc_no') || colName.includes('document_no') || colName.includes('reg_no')) colMap.docNo = idx;
+        else if (colName.includes('purchaser') || colName.includes('buyer') || colName.includes('second_party')) colMap.purchaser = idx;
+        else if (colName.includes('seller') || colName.includes('vendor') || colName.includes('first_party')) colMap.seller = idx;
+        else if (colName.includes('flat') || colName.includes('unit')) colMap.flat = idx;
+        else if (colName.includes('carpet') || colName.includes('area')) colMap.carpetArea = idx;
+        else if (colName.includes('sro') || colName.includes('sub_registrar')) colMap.sro = idx;
+        else if (colName.includes('doc_type') || colName.includes('document_type')) colMap.docType = idx;
+        else if (colName.includes('rera')) colMap.rera = idx;
+        else if (colName.includes('desc') || colName.includes('property_desc')) colMap.desc = idx;
+        else if (colName === 'id' || colName === 'sr_no' || colName === 'serial_no') colMap.id = idx;
+      });
+    }
+  }
+}
+
 const projectsMap = {};
 const allTransactions = [];
 
-for (let i = 0; i < rows.length; i++) {
+for (let i = startRow; i < rows.length; i++) {
   const r = rows[i];
-  if (!r || r.length < 15) continue;
+  if (!r || r.length < 5) continue;
 
-  const id = r[0] || String(i + 1);
-  const society = r[43] || '';
-  const bldg = r[44] || '';
-  const desc = r[14] || '';
+  const id = r[colMap.id] || String(i + 1);
+  const society = r[colMap.society] || '';
+  const bldg = r[colMap.bldg] || '';
+  const desc = r[colMap.desc] || '';
   const projName = normalizeProjectName(society, bldg, desc);
   const slug = projName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-  let priceStr = (r[18] || r[19] || '').replace(/[^0-9]/g, '');
+  let rawPrice = r[colMap.price] || '';
+  if (!rawPrice && r[19]) rawPrice = r[19];
+  let priceStr = String(rawPrice).replace(/[^0-9]/g, '');
   let price = parseInt(priceStr, 10) || 0;
   // Sanity check on price: max 50 Crores (500000000) to avoid hashes/pincodes parsed as prices
   if (price > 500000000) {
     price = 0;
   }
-  let date = (r[10] || r[25] || '').trim();
-  let docNo = (r[8] || r[36] || '').trim();
-  let purchaser = (r[13] || '').replace(/[{}"']/g, '').trim();
-  let seller = (r[12] || '').trim();
-  let flat = (r[45] || '').trim();
-  let carpetArea = (r[21] || r[50] || '').replace(/^1\)\s*/, '').trim();
-  let sro = (r[11] || 'Joint S.R. Haveli 4').trim();
-  let docType = (r[9] || r[52] || 'Agreement Relating to Deposit of Title Deeds,Pawn').trim();
+  let date = String(r[colMap.date] || r[25] || '').trim();
+  let docNo = String(r[colMap.docNo] || r[36] || '').trim();
+  let purchaser = String(r[colMap.purchaser] || '').replace(/[{}"']/g, '').trim();
+  let seller = String(r[colMap.seller] || '').trim();
+  let flat = String(r[colMap.flat] || '').trim();
+  let carpetArea = String(r[colMap.carpetArea] || r[50] || '').replace(/^1\)\s*/, '').trim();
+  let sro = String(r[colMap.sro] || 'Joint S.R. Haveli 4').trim();
+  let docType = String(r[colMap.docType] || r[52] || 'Agreement Relating to Deposit of Title Deeds,Pawn').trim();
 
   // Unit fallback
   let unit = flat ? `Flat ${flat}` : '';

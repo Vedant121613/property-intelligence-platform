@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "server": "node server/index.js",
-    "build": "vite build",
+    "build:data": "node server/build-kharadi-data.js",
+    "build": "node server/build-kharadi-data.js && vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },

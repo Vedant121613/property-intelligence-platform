@@ -36,19 +36,19 @@ export default function TransactionsModal({
   });
 
   const toggleUnlockRow = async (id) => {
-    const isCurrentlyUnlocked = (allUnlocked || unlockedIds.has(id) || isTxnUnlocked(id)) && !hiddenIds.has(id);
+    const isCurrentlyUnlocked = allUnlocked || unlockedIds.has(id);
 
     if (isCurrentlyUnlocked) {
-      setHiddenIds(prev => new Set(prev).add(id));
-      return;
-    }
-
-    if (allUnlocked || unlockedIds.has(id) || isTxnUnlocked(id)) {
-      setHiddenIds(prev => {
+      setUnlockedIds(prev => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
+      return;
+    }
+
+    if (isTxnUnlocked(id)) {
+      setUnlockedIds(prev => new Set(prev).add(id));
       return;
     }
 
@@ -57,11 +57,6 @@ export default function TransactionsModal({
         const res = await unlockTxn(id);
         if (res.unlocked || res.success) {
           setUnlockedIds(prev => new Set(prev).add(id));
-          setHiddenIds(prev => {
-            const next = new Set(prev);
-            next.delete(id);
-            return next;
-          });
         }
       });
       return;
@@ -70,11 +65,6 @@ export default function TransactionsModal({
     const res = await unlockTxn(id);
     if (res.unlocked || res.success) {
       setUnlockedIds(prev => new Set(prev).add(id));
-      setHiddenIds(prev => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
     }
   };
 
@@ -82,11 +72,9 @@ export default function TransactionsModal({
     if (allUnlocked) {
       setAllUnlocked(false);
       setUnlockedIds(new Set());
-      setHiddenIds(new Set());
     } else {
       setAllUnlocked(true);
       setUnlockedIds(new Set(combined.map(c => c.id)));
-      setHiddenIds(new Set());
     }
   };
 
@@ -193,7 +181,7 @@ export default function TransactionsModal({
               <tbody>
                 {filtered.length > 0 ? (
                   filtered.map((row) => {
-                    const isUnlocked = (allUnlocked || unlockedIds.has(row.id) || isTxnUnlocked(row.id)) && !hiddenIds.has(row.id);
+                    const isUnlocked = allUnlocked || unlockedIds.has(row.id);
                     return (
                       <tr key={row.id}>
                         <td>{row.date}</td>

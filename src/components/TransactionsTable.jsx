@@ -21,18 +21,12 @@ export default function TransactionsTable({
   const [activeTab, setActiveTab] = useState('sale');
   const [allUnlocked, setAllUnlocked] = useState(false);
   const [unlockedIds, setUnlockedIds] = useState(new Set());
-  const [hiddenIds, setHiddenIds] = useState(new Set());
   const [selectedTxn, setSelectedTxn] = useState(null);
 
   const rows = (activeTab === 'sale' ? transactions.sale : transactions.rent) || [];
 
   const handleUnlockSuccess = (txnId) => {
     setUnlockedIds(prev => new Set(prev).add(txnId));
-    setHiddenIds(prev => {
-      const next = new Set(prev);
-      next.delete(txnId);
-      return next;
-    });
     setSelectedTxn(null);
   };
 
@@ -41,11 +35,9 @@ export default function TransactionsTable({
       if (allUnlocked) {
         setAllUnlocked(false);
         setUnlockedIds(new Set());
-        setHiddenIds(new Set());
       } else {
         setAllUnlocked(true);
         setUnlockedIds(new Set(rows.map(r => r.id)));
-        setHiddenIds(new Set());
       }
       return;
     }
@@ -65,21 +57,21 @@ export default function TransactionsTable({
     e.stopPropagation();
     e.preventDefault();
 
-    const isCurrentlyUnlocked = (allUnlocked || unlockedIds.has(row.id) || isTxnUnlocked(row.id)) && !hiddenIds.has(row.id);
+    const isCurrentlyUnlocked = allUnlocked || unlockedIds.has(row.id);
 
-    // 1. If currently displaying the unlocked price, toggle off (hide)
+    // 1. If currently displaying the unlocked price, toggle off (lock)
     if (isCurrentlyUnlocked) {
-      setHiddenIds(prev => new Set(prev).add(row.id));
-      return;
-    }
-
-    // 2. If already authorized (unlocked before), unhide directly without consuming a trial
-    if (allUnlocked || unlockedIds.has(row.id) || isTxnUnlocked(row.id)) {
-      setHiddenIds(prev => {
+      setUnlockedIds(prev => {
         const next = new Set(prev);
         next.delete(row.id);
         return next;
       });
+      return;
+    }
+
+    // 2. If already unlocked in user account, reveal directly in place without consuming a trial
+    if (isTxnUnlocked(row.id)) {
+      setUnlockedIds(prev => new Set(prev).add(row.id));
       return;
     }
 
@@ -89,11 +81,6 @@ export default function TransactionsTable({
         const res = await unlockTxn(row.id);
         if (res.unlocked || res.success) {
           setUnlockedIds(prev => new Set(prev).add(row.id));
-          setHiddenIds(prev => {
-            const next = new Set(prev);
-            next.delete(row.id);
-            return next;
-          });
         }
       });
       return;
@@ -109,11 +96,6 @@ export default function TransactionsTable({
     const res = await unlockTxn(row.id);
     if (res.unlocked || res.success) {
       setUnlockedIds(prev => new Set(prev).add(row.id));
-      setHiddenIds(prev => {
-        const next = new Set(prev);
-        next.delete(row.id);
-        return next;
-      });
     } else if (res.limitReached) {
       setSelectedTxn(row);
     }
@@ -195,7 +177,7 @@ export default function TransactionsTable({
           <tbody>
             {rows.length > 0 ? (
               rows.slice(0, 5).map((row) => {
-                const isUnlocked = (allUnlocked || unlockedIds.has(row.id) || isTxnUnlocked(row.id)) && !hiddenIds.has(row.id);
+                const isUnlocked = allUnlocked || unlockedIds.has(row.id);
                 const rawAmt = row.amount || row.priceFormatted;
                 const displayAmt = (rawAmt && rawAmt !== 'Rs. NaN Lac' && rawAmt !== '₹ 0.00 Lac' && rawAmt !== '-')
                   ? (rawAmt.startsWith('₹') || rawAmt.startsWith('Rs') ? rawAmt : `₹ ${rawAmt}`)

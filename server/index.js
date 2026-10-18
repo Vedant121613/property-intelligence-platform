@@ -944,7 +944,7 @@ app.get('/api/kharadi/deeds', async (req, res) => {
           type: d.doc_type || 'Sale / Title Deed',
           floorTower: d.building || 'Wing A',
           unit: d.unit || 'Residential Unit',
-          amount: d.price_formatted || (d.price > 0 ? `₹${(d.price/100000).toFixed(2)} Lac` : '₹85.00 Lac'),
+          amount: (d.price_formatted && d.price_formatted !== '-') ? d.price_formatted : (d.price > 0 ? (d.price >= 10000000 ? `₹${(d.price/10000000).toFixed(2)} Cr` : `₹${(d.price/100000).toFixed(2)} Lac`) : '-'),
           purchaser: d.purchaser || 'Verified Resident',
           seller: d.seller || 'Promoter',
           docNo: d.doc_no,
@@ -981,6 +981,77 @@ app.get('/api/kharadi/deeds', async (req, res) => {
   }
 });
 
+// GET /api/record/:id - Fetch single verified property deed record by ID
+app.get(['/api/record/:id', '/api/transaction/:id', '/api/deed/:id'], async (req, res) => {
+  try {
+    const rawId = req.params.id;
+    const cleanId = String(rawId).replace(/^kh-/, '');
+
+    try {
+      const dbRes = await query(`
+        SELECT * FROM property_records 
+        WHERE record_id = $1 OR id::text = $1 OR doc_no = $1 OR record_id = $2
+        LIMIT 1
+      `, [rawId, cleanId]);
+
+      if (dbRes.rows && dbRes.rows.length > 0) {
+        const d = dbRes.rows[0];
+        const fmtPrice = (d.price_formatted && d.price_formatted !== '-')
+          ? d.price_formatted
+          : (d.price > 0 ? (d.price >= 10000000 ? `₹${(d.price/10000000).toFixed(2)} Cr` : `₹${(d.price/100000).toFixed(2)} Lac`) : '-');
+
+        return res.json({
+          success: true,
+          record: {
+            id: `kh-${d.record_id || d.id}`,
+            recordId: d.record_id || String(d.id),
+            docNo: d.doc_no,
+            date: d.reg_date,
+            price: d.price,
+            priceFormatted: fmtPrice,
+            purchaser: d.purchaser,
+            seller: d.seller,
+            unit: d.unit,
+            carpetArea: d.carpet_area,
+            building: d.building,
+            sro: d.sro_name,
+            docType: d.doc_type,
+            projectName: d.project_name,
+            projectSlug: d.project_slug,
+            locality: d.locality || 'Kharadi',
+            city: d.city || 'Pune'
+          }
+        });
+      }
+    } catch (dbErr) {
+      console.warn('Note: property_records single lookup note:', dbErr.message);
+    }
+
+    // Local fallback from kharadiFallback.transactionsMap
+    if (kharadiFallback?.transactionsMap) {
+      const match = kharadiFallback.transactionsMap[rawId] || kharadiFallback.transactionsMap[cleanId] || kharadiFallback.transactionsMap[`kh-${cleanId}`];
+      if (match) {
+        return res.json({ success: true, record: match });
+      }
+    }
+
+    // Fallback search across project recentTransactions
+    if (kharadiFallback?.projects) {
+      for (const p of kharadiFallback.projects) {
+        if (p.recentTransactions) {
+          const match = p.recentTransactions.find(t => t.id === rawId || t.id === `kh-${cleanId}` || t.recordId === cleanId);
+          if (match) return res.json({ success: true, record: match });
+        }
+      }
+    }
+
+    res.status(404).json({ success: false, message: 'Record not found' });
+  } catch (err) {
+    console.error('Error in /api/record/:id:', err.message);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
 // GET /api/pune/project/:id - Fetch full project details
 app.get('/api/pune/project/:id', async (req, res) => {
   try {
@@ -1012,7 +1083,7 @@ app.get('/api/pune/project/:id', async (req, res) => {
             type: d.doc_type || 'Sale / Title Deed',
             floorTower: d.building || 'Wing A',
             unit: d.unit || 'Residential Unit',
-            amount: d.price_formatted || (d.price > 0 ? `₹${(d.price/100000).toFixed(2)} Lac` : '₹85.00 Lac'),
+            amount: (d.price_formatted && d.price_formatted !== '-') ? d.price_formatted : (d.price > 0 ? (d.price >= 10000000 ? `₹${(d.price/10000000).toFixed(2)} Cr` : `₹${(d.price/100000).toFixed(2)} Lac`) : '-'),
             purchaser: d.purchaser || 'Verified Resident',
             seller: d.seller || kp.developer,
             docNo: d.doc_no,

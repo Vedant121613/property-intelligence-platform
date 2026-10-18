@@ -541,6 +541,12 @@ fs.writeFileSync(serverDataSqlPath, sqlContent, 'utf8');
 console.log(`Successfully generated ${dataSqlPath} and ${serverDataSqlPath} (${(fs.statSync(dataSqlPath).size / 1024).toFixed(1)} KB)`);
 
 // 2. Export clean JSON for frontend fallback / static usage
+const transactionsMap = {};
+allTransactions.forEach(t => {
+  transactionsMap[t.id] = t;
+  transactionsMap[t.recordId] = t;
+});
+
 const kharadiExport = {
   locality: 'Kharadi',
   taluka: 'Haveli',
@@ -548,6 +554,7 @@ const kharadiExport = {
   totalTransactions: allTransactions.length,
   totalProjects: sortedProjects.length,
   avgPriceSqFt: '₹ 9,250/sq.ft',
+  transactionsMap,
   projects: sortedProjects.map(p => ({
     id: p.id,
     projectId: p.projectId,

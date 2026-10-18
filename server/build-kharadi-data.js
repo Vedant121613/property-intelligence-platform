@@ -192,8 +192,46 @@ function normalizeProjectName(rawSociety, rawBldg, rawDesc) {
     .join(' ');
 }
 
-console.log('Reading data 1.9.csv...');
-const rawContent = fs.readFileSync(csvPath, 'utf8');
+// Locate candidate CSV files
+let activeCsvPath = null;
+const possiblePaths = [
+  path.resolve(__dirname, '../data 1.9.csv'),
+  path.resolve(__dirname, 'data 1.9.csv'),
+  path.resolve(process.cwd(), 'data 1.9.csv')
+];
+
+for (const p of possiblePaths) {
+  if (fs.existsSync(p)) {
+    activeCsvPath = p;
+    break;
+  }
+}
+
+// If specific file not found, search root for any .csv
+if (!activeCsvPath) {
+  try {
+    const rootFiles = fs.readdirSync(path.resolve(__dirname, '..'));
+    const csvFile = rootFiles.find(f => f.endsWith('.csv') && !f.includes('pune_project'));
+    if (csvFile) {
+      activeCsvPath = path.resolve(__dirname, '..', csvFile);
+    }
+  } catch (e) {}
+}
+
+const jsonTarget = path.resolve(__dirname, '../src/data/kharadiData.json');
+
+if (!activeCsvPath) {
+  if (fs.existsSync(jsonTarget)) {
+    console.log('No raw CSV found on server. Using existing pre-built kharadiData.json.');
+    process.exit(0);
+  } else {
+    console.error('Error: No CSV file found and no existing kharadiData.json present.');
+    process.exit(1);
+  }
+}
+
+console.log(`Reading CSV from ${activeCsvPath}...`);
+const rawContent = fs.readFileSync(activeCsvPath, 'utf8');
 const rows = parseCSV(rawContent);
 console.log(`Parsed ${rows.length} total rows.`);
 

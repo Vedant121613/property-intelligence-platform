@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Info, ArrowRight, Lock, Unlock } from 'lucide-react';
 import UnlockTransactionModal from './UnlockTransactionModal';
+import { useAuth } from '../context/AuthContext';
 
 export default function TransactionsTable({ 
   transactions = { sale: [], rent: [] }, 
@@ -8,6 +9,15 @@ export default function TransactionsTable({
   onViewAllClick,
   onNavigate
 }) {
+  const { 
+    isAuthenticated, 
+    openAuthModal, 
+    unlockTxn, 
+    isTxnUnlocked, 
+    freeAttemptsLeft, 
+    isPaymentDone 
+  } = useAuth();
+
   const [activeTab, setActiveTab] = useState('sale');
   const [allUnlocked, setAllUnlocked] = useState(false);
   const [unlockedIds, setUnlockedIds] = useState(new Set());
@@ -21,29 +31,68 @@ export default function TransactionsTable({
   };
 
   const handleToggleAll = () => {
-    if (allUnlocked) {
-      setAllUnlocked(false);
-      setUnlockedIds(new Set());
-    } else {
-      setAllUnlocked(true);
-      setUnlockedIds(new Set(rows.map(r => r.id)));
+    if (isPaymentDone) {
+      if (allUnlocked) {
+        setAllUnlocked(false);
+        setUnlockedIds(new Set());
+      } else {
+        setAllUnlocked(true);
+        setUnlockedIds(new Set(rows.map(r => r.id)));
+      }
+      return;
+    }
+
+    if (!isAuthenticated) {
+      openAuthModal('signup');
+      return;
+    }
+
+    // Free tier: Prompt plan selection for bulk unlock
+    if (rows.length > 0) {
+      setSelectedTxn(rows[0]);
     }
   };
 
-  const handleToggleRowLock = (e, rowId) => {
+  const handleToggleRowLock = async (e, row) => {
     e.stopPropagation();
     e.preventDefault();
-    setUnlockedIds(prev => {
-      const next = new Set(prev);
-      if (allUnlocked) {
-        if (next.has(rowId)) next.delete(rowId);
-        else next.add(rowId);
-      } else {
-        if (next.has(rowId)) next.delete(rowId);
-        else next.add(rowId);
-      }
-      return next;
-    });
+
+    const isAlreadyUnlocked = allUnlocked || unlockedIds.has(row.id) || isTxnUnlocked(row.id);
+    if (isAlreadyUnlocked) {
+      // Toggle view off/on without consuming new attempts
+      setUnlockedIds(prev => {
+        const next = new Set(prev);
+        if (next.has(row.id)) next.delete(row.id);
+        else next.add(row.id);
+        return next;
+      });
+      return;
+    }
+
+    // 1. If not logged in, prompt sign in or sign up to claim 3 free trials
+    if (!isAuthenticated) {
+      openAuthModal('signup', async () => {
+        const res = await unlockTxn(row.id);
+        if (res.unlocked || res.success) {
+          setUnlockedIds(prev => new Set(prev).add(row.id));
+        }
+      });
+      return;
+    }
+
+    // 2. If out of attempts and not paid, open plan modal
+    if (!isPaymentDone && freeAttemptsLeft <= 0) {
+      setSelectedTxn(row);
+      return;
+    }
+
+    // 3. Authenticated with attempts remaining or paid: unlock in place!
+    const res = await unlockTxn(row.id);
+    if (res.unlocked || res.success) {
+      setUnlockedIds(prev => new Set(prev).add(row.id));
+    } else if (res.limitReached) {
+      setSelectedTxn(row);
+    }
   };
 
   return (
@@ -123,7 +172,7 @@ export default function TransactionsTable({
           <tbody>
             {rows.length > 0 ? (
               rows.slice(0, 5).map((row) => {
-                const isUnlocked = allUnlocked || unlockedIds.has(row.id);
+                const isUnlocked = allUnlocked || unlockedIds.has(row.id) || isTxnUnlocked(row.id);
                 const displayAmt = row.amount || row.priceFormatted || '₹ 84.50 Lac';
 
                 return (
@@ -137,7 +186,7 @@ export default function TransactionsTable({
                     <td>
                       <div 
                         className="price-amount-cell"
-                        onClick={(e) => handleToggleRowLock(e, row.id)}
+                        onClick={(e) => handleToggleRowLock(e, row)}
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',

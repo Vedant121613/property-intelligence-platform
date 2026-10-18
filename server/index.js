@@ -341,32 +341,64 @@ app.post('/api/auth/verify-access-token', async (req, res) => {
 // User Sign In / Registration with Mobile Number
 app.post('/api/auth/phone-login', async (req, res) => {
   try {
-    const { phone, name } = req.body;
+    const { phone, name, email, city } = req.body;
     if (!phone) {
       return res.status(400).json({ success: false, message: 'Phone number is required' });
     }
 
-    const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+    const cleanPhone = String(phone).replace(/\D/g, '').slice(-10);
     const userName = name || `User ${cleanPhone.slice(-4)}`;
+    const userEmail = email || `${cleanPhone}@pureframe.io`;
+    const userCity = city || 'pune';
 
     // Check if user exists
     const existing = await query('SELECT * FROM users WHERE phone = $1', [cleanPhone]);
     
     if (existing.rows.length > 0) {
+      let existingUser = existing.rows[0];
+      // Update name/email/city if provided
+      if (name || email || city) {
+        try {
+          const upd = await query(
+            `UPDATE users 
+             SET name = COALESCE($1, name), 
+                 email = COALESCE($2, email), 
+                 city = COALESCE($3, city), 
+                 updated_at = NOW() 
+             WHERE phone = $4 
+             RETURNING *`,
+            [name || null, email || null, city || null, cleanPhone]
+          );
+          if (upd.rows.length > 0) existingUser = upd.rows[0];
+        } catch (e) {
+          // If columns don't exist yet, continue with existing user
+        }
+      }
       return res.json({
         success: true,
         isNewUser: false,
-        user: existing.rows[0]
+        user: existingUser
       });
     }
 
     // Insert new user with 3 free attempts and is_payment_done = false
-    const insertResult = await query(
-      `INSERT INTO users (phone, name, free_attempts_left, free_attempts_used, is_payment_done, selected_plan, unlocked_deeds)
-       VALUES ($1, $2, 3, 0, FALSE, 'none', '[]'::jsonb)
-       RETURNING *`,
-      [cleanPhone, userName]
-    );
+    let insertResult;
+    try {
+      insertResult = await query(
+        `INSERT INTO users (phone, name, email, city, free_attempts_left, free_attempts_used, is_payment_done, selected_plan, unlocked_deeds)
+         VALUES ($1, $2, $3, $4, 3, 0, FALSE, 'none', '[]'::jsonb)
+         RETURNING *`,
+        [cleanPhone, userName, userEmail, userCity]
+      );
+    } catch (e) {
+      // Fallback if email/city columns not yet migrated
+      insertResult = await query(
+        `INSERT INTO users (phone, name, free_attempts_left, free_attempts_used, is_payment_done, selected_plan, unlocked_deeds)
+         VALUES ($1, $2, 3, 0, FALSE, 'none', '[]'::jsonb)
+         RETURNING *`,
+        [cleanPhone, userName]
+      );
+    }
 
     res.json({
       success: true,
@@ -377,6 +409,13 @@ app.post('/api/auth/phone-login', async (req, res) => {
     console.error('Error in /api/auth/phone-login:', err.message);
     res.status(500).json({ success: false, error: 'Database error' });
   }
+});
+
+// Alias for sign up / login
+app.post('/api/auth/signup', async (req, res) => {
+  const { phone, name, email, city } = req.body;
+  req.body.phone = phone || req.body.mobile || '98200' + Math.floor(10000 + Math.random() * 90000);
+  return app._router.handle(req, res);
 });
 
 // Get User Profile by Phone
@@ -395,7 +434,7 @@ app.get('/api/user/:phone', async (req, res) => {
   }
 });
 
-// Unlock Transaction Deed (Enforces 3 free attempts limit or paid plan)
+// Unlock Transaction Deed (Strictly enforces 3 free attempts limit or paid plan)
 app.post('/api/user/unlock-deed', async (req, res) => {
   try {
     const { phone, transactionId } = req.body;
@@ -427,6 +466,7 @@ app.post('/api/user/unlock-deed', async (req, res) => {
         success: true,
         alreadyUnlocked: true,
         free_attempts_left: user.free_attempts_left,
+        free_attempts_used: user.free_attempts_used,
         is_payment_done: user.is_payment_done,
         selected_plan: user.selected_plan,
         unlocked_deeds: unlockedDeeds
@@ -435,7 +475,7 @@ app.post('/api/user/unlock-deed', async (req, res) => {
 
     // CASE A: User has an active paid plan (Unlimited Unlocks)
     if (user.is_payment_done === true) {
-      const updatedDeeds = [...unlockedDeeds, String(transactionId)];
+      const updatedDeeds = Array.from(new Set([...unlockedDeeds, String(transactionId)]));
       await query(
         `UPDATE users 
          SET unlocked_deeds = $1, updated_at = NOW() 
@@ -456,41 +496,55 @@ app.post('/api/user/unlock-deed', async (req, res) => {
         is_payment_done: true,
         selected_plan: user.selected_plan,
         free_attempts_left: user.free_attempts_left,
+        free_attempts_used: user.free_attempts_used,
         unlocked_deeds: updatedDeeds
       });
     }
 
-    // CASE B: Unlimited Unlocks Active
-    const updatedDeeds = Array.from(new Set([...unlockedDeeds, String(transactionId)]));
+    // CASE B: User has free attempts remaining (3, 2, or 1 left)
+    if (user.free_attempts_left > 0) {
+      const updatedDeeds = Array.from(new Set([...unlockedDeeds, String(transactionId)]));
+      const newAttemptsLeft = Math.max(0, user.free_attempts_left - 1);
+      const newAttemptsUsed = (user.free_attempts_used || 0) + 1;
 
-    await query(
-      `UPDATE users 
-       SET free_attempts_left = 9999, 
-           free_attempts_used = free_attempts_used + 1, 
-           is_payment_done = TRUE,
-           selected_plan = 'unlimited',
-           unlocked_deeds = $1, 
-           updated_at = NOW() 
-       WHERE id = $2`,
-      [JSON.stringify(updatedDeeds), user.id]
-    );
+      await query(
+        `UPDATE users 
+         SET free_attempts_left = $1, 
+             free_attempts_used = $2, 
+             unlocked_deeds = $3, 
+             updated_at = NOW() 
+         WHERE id = $4`,
+        [newAttemptsLeft, newAttemptsUsed, JSON.stringify(updatedDeeds), user.id]
+      );
 
-    await query(
-      `INSERT INTO unlock_logs (user_id, phone, transaction_id, method) 
-       VALUES ($1, $2, $3, 'unlimited')`,
-      [user.id, cleanPhone, String(transactionId)]
-    );
+      await query(
+        `INSERT INTO unlock_logs (user_id, phone, transaction_id, method) 
+         VALUES ($1, $2, $3, 'free_attempt')`,
+        [user.id, cleanPhone, String(transactionId)]
+      );
 
-    return res.json({
-      success: true,
-      unlocked: true,
-      method: 'unlimited',
-      free_attempts_left: 9999,
-      free_attempts_used: user.free_attempts_used + 1,
-      is_payment_done: true,
-      selected_plan: 'unlimited',
-      unlocked_deeds: updatedDeeds,
-      message: 'Deed unlocked successfully (Unlimited Unlocks Active)!'
+      return res.json({
+        success: true,
+        unlocked: true,
+        method: 'free_attempt',
+        free_attempts_left: newAttemptsLeft,
+        free_attempts_used: newAttemptsUsed,
+        is_payment_done: false,
+        selected_plan: user.selected_plan || 'none',
+        unlocked_deeds: updatedDeeds,
+        message: `Deed unlocked successfully (${newAttemptsLeft} free trials remaining)`
+      });
+    }
+
+    // CASE C: 0 free attempts left and not paid -> Free Limit Reached
+    return res.status(200).json({
+      success: false,
+      limitReached: true,
+      free_attempts_left: 0,
+      free_attempts_used: user.free_attempts_used || 3,
+      is_payment_done: false,
+      unlocked_deeds: unlockedDeeds,
+      message: 'You have used all 3 free trial unlocks. Please select a plan to unlock unlimited transaction records.'
     });
 
   } catch (err) {

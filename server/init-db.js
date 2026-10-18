@@ -80,6 +80,11 @@ export async function runAutoMigration() {
           ALTER COLUMN bhks TYPE TEXT,
           ALTER COLUMN completion TYPE TEXT,
           ALTER COLUMN pin_code TYPE TEXT;
+
+        ALTER TABLE IF EXISTS users 
+          ADD COLUMN IF NOT EXISTS email TEXT,
+          ADD COLUMN IF NOT EXISTS city TEXT,
+          ADD COLUMN IF NOT EXISTS role TEXT;
       `);
     } catch (widenErr) {
       // Ignore if table doesn't exist yet

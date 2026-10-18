@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { ChevronRight, Lock, Unlock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function ProjectCard({ project, onClick, defaultUnlocked = false }) {
-  const [unlocked, setUnlocked] = useState(defaultUnlocked);
+  const { isAuthenticated, openAuthModal, unlockTxn, isTxnUnlocked, freeAttemptsLeft, isPaymentDone } = useAuth();
+  const [unlocked, setUnlocked] = useState(defaultUnlocked || isTxnUnlocked(project.id));
 
   React.useEffect(() => {
-    setUnlocked(defaultUnlocked);
-  }, [defaultUnlocked]);
+    if (defaultUnlocked || isTxnUnlocked(project.id)) {
+      setUnlocked(true);
+    }
+  }, [defaultUnlocked, isTxnUnlocked, project.id]);
 
   const formattedCount = project.saleTxns === 0 
     ? '00' 
@@ -36,11 +40,41 @@ export default function ProjectCard({ project, onClick, defaultUnlocked = false 
   const priceText = getDisplayPrice();
 
   const handleCardClick = (e) => {
-    // If the click is on or inside the price toggle button, don't trigger card navigation!
     if (e.target.closest('.price-badge-interactive') || e.target.closest('button')) {
       return;
     }
     if (onClick) onClick();
+  };
+
+  const handlePriceClick = async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (unlocked) {
+      setUnlocked(false);
+      return;
+    }
+
+    // 1. If not authenticated, prompt sign up to claim 3 free trials
+    if (!isAuthenticated) {
+      openAuthModal('signup', async () => {
+        const res = await unlockTxn(project.id);
+        if (res.unlocked || res.success) setUnlocked(true);
+      });
+      return;
+    }
+
+    // 2. If out of attempts and not paid, open plan prompt / modal
+    if (!isPaymentDone && freeAttemptsLeft <= 0) {
+      if (onClick) onClick(); // Navigate to project page which shows plan prompt
+      return;
+    }
+
+    // 3. Authenticated: unlock directly in place!
+    const res = await unlockTxn(project.id);
+    if (res.unlocked || res.success) {
+      setUnlocked(true);
+    }
   };
 
   return (
@@ -66,11 +100,7 @@ export default function ProjectCard({ project, onClick, defaultUnlocked = false 
           <button
             type="button"
             className="price-badge-interactive"
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setUnlocked(prev => !prev);
-            }}
+            onClick={handlePriceClick}
             style={{
               display: 'inline-flex',
               alignItems: 'center',

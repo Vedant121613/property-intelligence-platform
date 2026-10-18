@@ -17,6 +17,7 @@ import EmptyState from '../components/EmptyState';
 import TransactionsModal from '../components/TransactionsModal';
 import ProjectCard from '../components/ProjectCard';
 import { getProjectDetails } from '../services/propertyService';
+import { useAuth } from '../context/AuthContext';
 
 export default function ProjectPage({
   cityId = 'pune',
@@ -27,6 +28,7 @@ export default function ProjectPage({
   talukaName,
   onNavigate
 }) {
+  const { isAuthenticated, openAuthModal, unlockTxn, isTxnUnlocked, freeAttemptsLeft, isPaymentDone } = useAuth();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAllTxnsModal, setShowAllTxnsModal] = useState(false);
@@ -163,10 +165,28 @@ export default function ProjectPage({
               </div>
               <button
                 type="button"
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  setUnlockedLastSold(prev => !prev);
+                  if (unlockedLastSold) {
+                    setUnlockedLastSold(false);
+                    return;
+                  }
+                  if (!isAuthenticated) {
+                    openAuthModal('signup', async () => {
+                      const res = await unlockTxn('last-sold-' + project.id);
+                      if (res.unlocked || res.success) setUnlockedLastSold(true);
+                    });
+                    return;
+                  }
+                  if (!isPaymentDone && freeAttemptsLeft <= 0) {
+                    setShowAllTxnsModal(true);
+                    return;
+                  }
+                  const res = await unlockTxn('last-sold-' + project.id);
+                  if (res.unlocked || res.success) {
+                    setUnlockedLastSold(true);
+                  }
                 }}
                 style={{
                   display: 'inline-flex',
@@ -182,10 +202,10 @@ export default function ProjectPage({
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}
-                title="Toggle price visibility (Unlimited)"
+                title={unlockedLastSold ? "Price unlocked (Click to lock)" : "Price locked (Click to unlock directly)"}
               >
                 {unlockedLastSold ? <Unlock size={13} /> : <Lock size={13} />}
-                <span>{unlockedLastSold ? 'Unlocked (Unlimited)' : 'Unlock Price'}</span>
+                <span>{unlockedLastSold ? 'Price Unlocked' : 'Unlock Price'}</span>
               </button>
             </div>
           )}

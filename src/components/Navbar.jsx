@@ -25,7 +25,7 @@ export default function Navbar({
   onSelectCity, 
   onNavigate 
 }) {
-  const { user, isAuthenticated, logout, unlockedTxns, savedProperties, freeAttemptsLeft, isPaymentDone } = useAuth();
+  const { user, isAuthenticated, logout, unlockedTxns, savedProperties, freeAttemptsLeft, isPaymentDone, openAuthModal } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState({ localities: [], projects: [] });
@@ -334,45 +334,112 @@ export default function Navbar({
               )}
             </button>
             
-            {/* User Profile Avatar Button (Opens Slide-over Drawer) */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {/* 3 of 3 Attempts Tracker */}
-              <div 
-                className="pro-badge-nav-chip"
-                onClick={() => onNavigate('profile')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  background: isPaymentDone ? '#EFF6FF' : '#ECFDF5',
-                  border: isPaymentDone ? '1px solid #BFDBFE' : '1px solid #A7F3D0',
-                  color: isPaymentDone ? '#1D4ED8' : '#047857',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  padding: '4px 10px',
-                  borderRadius: '20px',
-                  cursor: 'pointer'
-                }}
-                title={isPaymentDone ? 'Pro Member' : `${freeAttemptsLeft} of 3 Free Attempts remaining`}
-              >
-                <ShieldCheck size={13} />
-                <span>{isPaymentDone ? 'PRO' : `${freeAttemptsLeft}/3`}</span>
-              </div>
-
-              <button 
-                type="button" 
-                className="user-profile-chip-btn"
-                onClick={() => setShowProfileDrawer(true)}
-                aria-label="User profile drawer"
-                title="Open User Profile"
-              >
-                <div className="user-avatar-btn">
-                  {user?.avatar || 'PF'}
+            {/* User Profile / Login Actions */}
+            {isAuthenticated ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {/* 3 of 3 Attempts Tracker */}
+                <div 
+                  className="pro-badge-nav-chip"
+                  onClick={() => onNavigate('profile')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    background: isPaymentDone ? '#EFF6FF' : '#ECFDF5',
+                    border: isPaymentDone ? '1px solid #BFDBFE' : '1px solid #A7F3D0',
+                    color: isPaymentDone ? '#1D4ED8' : '#047857',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    cursor: 'pointer'
+                  }}
+                  title={isPaymentDone ? 'Pro Member' : `${freeAttemptsLeft} of 3 Free Attempts remaining`}
+                >
+                  <ShieldCheck size={13} />
+                  <span>{isPaymentDone ? 'PRO' : `${freeAttemptsLeft}/3 Free`}</span>
                 </div>
-                <span className="user-profile-chip-name">{user?.name ? user.name.split(' ')[0] : 'Profile'}</span>
-                <ChevronDown size={14} color="#64748B" />
-              </button>
-            </div>
+
+                <button 
+                  type="button" 
+                  className="user-profile-chip-btn"
+                  onClick={() => setShowProfileDrawer(true)}
+                  aria-label="User profile drawer"
+                  title="Open User Profile"
+                >
+                  <div className="user-avatar-btn">
+                    {user?.avatar || 'PF'}
+                  </div>
+                  <span className="user-profile-chip-name">{user?.name ? user.name.split(' ')[0] : 'Profile'}</span>
+                  <ChevronDown size={14} color="#64748B" />
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('signin')}
+                  className="desktop-nav-only"
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    background: '#FFFFFF',
+                    color: '#1E293B',
+                    fontSize: '0.825rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Sign In
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('signup')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'var(--brand-gradient)',
+                    color: '#FFFFFF',
+                    fontSize: '0.825rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  <Sparkles size={13} />
+                  <span>Sign Up (3 Free)</span>
+                </button>
+
+                {/* Mobile Drawer Trigger for Guests */}
+                <button
+                  type="button"
+                  onClick={() => setShowProfileDrawer(true)}
+                  style={{
+                    background: '#F1F5F9',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '50%',
+                    width: '34px',
+                    height: '34px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#475569'
+                  }}
+                  aria-label="Open menu"
+                >
+                  <User size={16} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

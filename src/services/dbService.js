@@ -109,7 +109,7 @@ export async function getDbUser(phone) {
  * Login or create user in PostgreSQL and local registry.
  * Preserves previously used/decremented attempts when logging in again with the same number!
  */
-export async function dbPhoneLogin(phone, name) {
+export async function dbPhoneLogin(phone, name, email, city) {
   const cleanPhone = (phone || '').replace(/\D/g, '').slice(-10);
   if (!cleanPhone) return null;
 
@@ -122,6 +122,8 @@ export async function dbPhoneLogin(phone, name) {
     userRecord = {
       phone: cleanPhone,
       name: displayName,
+      email: email || `${cleanPhone}@pureframe.io`,
+      city: city || 'pune',
       free_attempts_left: 3,
       free_attempts_used: 0,
       is_payment_done: false,
@@ -129,6 +131,13 @@ export async function dbPhoneLogin(phone, name) {
       unlocked_deeds: []
     };
     saveLocalUserByPhone(cleanPhone, userRecord);
+  } else if (name || email || city) {
+    userRecord = saveLocalUserByPhone(cleanPhone, {
+      ...userRecord,
+      name: name || userRecord.name,
+      email: email || userRecord.email,
+      city: city || userRecord.city
+    });
   }
 
   // 2. Sync with PostgreSQL backend
@@ -138,7 +147,7 @@ export async function dbPhoneLogin(phone, name) {
     const res = await fetch(`${API_BASE}/auth/phone-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: cleanPhone, name: displayName }),
+      body: JSON.stringify({ phone: cleanPhone, name: displayName, email, city }),
       signal: controller.signal
     });
     clearTimeout(timer);

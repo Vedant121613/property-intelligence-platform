@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ChatWidget from './components/ChatWidget';
+import AuthModal from './components/AuthModal';
 import HomePage from './pages/HomePage';
 import TransactionsPage from './pages/TransactionsPage';
 import TransactionDetailPage from './pages/TransactionDetailPage';
@@ -14,6 +15,8 @@ import PlansPage from './pages/PlansPage';
 import MobileBottomNav from './components/MobileBottomNav';
 
 function AppContent() {
+  const { isAuthModalOpen, closeAuthModal, authModalTab, handleAuthSuccess, openAuthModal } = useAuth();
+
   const [route, setRoute] = useState(() => {
     const path = window.location.pathname;
     if (path.startsWith('/signin') || path.startsWith('/signup') || path.startsWith('/login')) {
@@ -69,14 +72,21 @@ function AppContent() {
   const [currentCity, setCurrentCity] = useState(route.params?.cityId || 'pune');
 
   const navigateTo = (page, params = {}) => {
+    if (page === 'signin') {
+      openAuthModal('signin');
+      return;
+    } else if (page === 'signup') {
+      openAuthModal('signup');
+      return;
+    }
+
     setRoute({ page, params });
     if (params.cityId) {
       setCurrentCity(params.cityId);
     }
 
     let targetUrl = '/';
-    if (page === 'home' || page === 'signin' || page === 'signup') {
-      page = 'home';
+    if (page === 'home') {
       targetUrl = '/';
     } else if (page === 'plans') {
       targetUrl = '/plans';
@@ -102,6 +112,15 @@ function AppContent() {
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/signin') || path.startsWith('/login')) {
+      openAuthModal('signin');
+    } else if (path.startsWith('/signup')) {
+      openAuthModal('signup');
+    }
+  }, []);
 
   useEffect(() => {
     const handlePopState = (event) => {
@@ -208,6 +227,14 @@ function AppContent() {
       <MobileBottomNav 
         currentRoute={route.page} 
         onNavigate={navigateTo} 
+      />
+
+      {/* Global Sign In / Sign Up Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={closeAuthModal}
+        defaultTab={authModalTab}
+        onSuccess={handleAuthSuccess}
       />
     </div>
   );

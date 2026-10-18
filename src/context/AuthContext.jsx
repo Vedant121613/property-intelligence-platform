@@ -15,48 +15,67 @@ const DEFAULT_UNLOCKED = [];
 const DEFAULT_SAVED = ['heera-solitaire'];
 const DEFAULT_ORDERS = [];
 
-export const DEFAULT_USER = {
-  id: 'usr_member',
-  name: 'User',
-  email: 'user@pureframe.io',
-  phone: '+91 98200 12345',
-  rawPhone: '9820012345',
-  city: 'Pune',
-  role: 'Home Buyer & Investor',
-  avatar: 'PF',
-  free_attempts_left: 9999,
-  free_attempts_used: 0,
-  is_payment_done: true,
-  selected_plan: 'unlimited',
-  unlocked_deeds: [],
-  joinedDate: 'October 2026',
-  verifiedBadge: true,
-  emailNotifications: true,
-  smsAlerts: true
-};
-
 export function AuthProvider({ children }) {
+  // Initialize user from localStorage if authenticated
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('pureframe_user');
       if (saved) {
         const parsed = JSON.parse(saved);
-        return {
-          ...DEFAULT_USER,
-          ...parsed,
-          free_attempts_left: 9999,
-          is_payment_done: true
-        };
+        // Clear out stale mock user with 9999 attempts if present
+        if (parsed.id === 'usr_member' && parsed.free_attempts_left === 9999 && !parsed.rawPhone) {
+          localStorage.removeItem('pureframe_user');
+          return null;
+        }
+        return parsed;
       }
-      return DEFAULT_USER;
+      return null;
     } catch {
-      return DEFAULT_USER;
+      return null;
     }
   });
 
-  const [freeAttemptsLeft, setFreeAttemptsLeft] = useState(9999);
-  const [freeAttemptsUsed, setFreeAttemptsUsed] = useState(0);
-  const [isPaymentDone, setIsPaymentDone] = useState(true);
+  const [freeAttemptsLeft, setFreeAttemptsLeft] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('pureframe_user');
+      if (savedUser) {
+        const u = JSON.parse(savedUser);
+        if (u.free_attempts_left !== undefined) return u.free_attempts_left;
+      }
+      const savedAttempts = localStorage.getItem('pureframe_free_attempts');
+      return savedAttempts !== null ? parseInt(savedAttempts, 10) : 3;
+    } catch {
+      return 3;
+    }
+  });
+
+  const [freeAttemptsUsed, setFreeAttemptsUsed] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('pureframe_user');
+      if (savedUser) {
+        const u = JSON.parse(savedUser);
+        if (u.free_attempts_used !== undefined) return u.free_attempts_used;
+      }
+      const savedUsed = localStorage.getItem('pureframe_attempts_used');
+      return savedUsed !== null ? parseInt(savedUsed, 10) : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const [isPaymentDone, setIsPaymentDone] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('pureframe_user');
+      if (savedUser) {
+        const u = JSON.parse(savedUser);
+        if (u.is_payment_done !== undefined) return Boolean(u.is_payment_done);
+      }
+      const savedPaid = localStorage.getItem('pureframe_is_paid');
+      return savedPaid ? JSON.parse(savedPaid) : false;
+    } catch {
+      return false;
+    }
+  });
 
   const [selectedPlan, setSelectedPlan] = useState(() => {
     try {
@@ -94,6 +113,38 @@ export function AuthProvider({ children }) {
     }
   });
 
+  // Modal State for Auth Dialog (Global trigger)
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState('signin');
+  const [authSuccessCallback, setAuthSuccessCallback] = useState(null);
+
+  const openAuthModal = (tab = 'signin', callback = null) => {
+    setAuthModalTab(tab);
+    if (callback) {
+      setAuthSuccessCallback(() => callback);
+    } else {
+      setAuthSuccessCallback(null);
+    }
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+    setAuthSuccessCallback(null);
+  };
+
+  const handleAuthSuccess = () => {
+    if (typeof authSuccessCallback === 'function') {
+      try {
+        authSuccessCallback();
+      } catch (err) {
+        console.error('Auth success callback error:', err);
+      }
+    }
+    setIsAuthModalOpen(false);
+    setAuthSuccessCallback(null);
+  };
+
   useEffect(() => {
     if (user) {
       localStorage.setItem('pureframe_user', JSON.stringify(user));
@@ -114,7 +165,6 @@ export function AuthProvider({ children }) {
     localStorage.setItem('pureframe_agreement_orders', JSON.stringify(agreementOrders));
   }, [agreementOrders]);
 
-  // Synchronize state to localStorage
   useEffect(() => {
     localStorage.setItem('pureframe_free_attempts', String(freeAttemptsLeft));
   }, [freeAttemptsLeft]);
@@ -150,6 +200,7 @@ export function AuthProvider({ children }) {
           if (dbU.is_payment_done !== undefined) setIsPaymentDone(Boolean(dbU.is_payment_done));
           if (dbU.selected_plan) setSelectedPlan(dbU.selected_plan);
           if (Array.isArray(dbU.unlocked_deeds)) setUnlockedTxns(dbU.unlocked_deeds);
+          setUser(prev => prev ? ({ ...prev, ...dbU }) : prev);
         }
       }).catch(() => {});
     }
@@ -158,13 +209,14 @@ export function AuthProvider({ children }) {
   const login = (emailOrPhone, password) => {
     const isEmail = (emailOrPhone || '').includes('@');
     const cleanPhone = !isEmail ? (emailOrPhone || '').replace(/\D/g, '').slice(-10) : '';
-    const phoneToUse = cleanPhone || '9820012345';
+    const phoneToUse = cleanPhone || '98' + Math.floor(10000000 + Math.random() * 90000000);
     const formattedPhone = `+91 ${phoneToUse.slice(0, 5)} ${phoneToUse.slice(5)}`;
 
-    // Immediately read from local per-phone registry so decremented attempts are restored!
+    // Read from local registry or initialize
     const local = getLocalUserByPhone(phoneToUse) || {
       phone: phoneToUse,
       name: isEmail ? emailOrPhone.split('@')[0].replace('.', ' ') : `User ${phoneToUse.slice(-4)}`,
+      email: isEmail ? emailOrPhone : `${phoneToUse}@pureframe.io`,
       free_attempts_left: 3,
       free_attempts_used: 0,
       is_payment_done: false,
@@ -172,7 +224,8 @@ export function AuthProvider({ children }) {
       unlocked_deeds: []
     };
 
-    const formattedName = local.name || (isEmail ? emailOrPhone.split('@')[0].replace('.', ' ') : `User ${phoneToUse.slice(-4)}`);
+    const rawName = local.name || (isEmail ? emailOrPhone.split('@')[0].replace('.', ' ') : `User ${phoneToUse.slice(-4)}`);
+    const formattedName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
     const initials = formattedName
       .split(' ')
       .map(n => n.charAt(0).toUpperCase())
@@ -181,17 +234,17 @@ export function AuthProvider({ children }) {
 
     const newUser = {
       id: `usr_${phoneToUse}`,
-      name: formattedName.charAt(0).toUpperCase() + formattedName.slice(1),
-      email: isEmail ? emailOrPhone : `${phoneToUse}@pureframe.io`,
+      name: formattedName,
+      email: isEmail ? emailOrPhone : (local.email || `${phoneToUse}@pureframe.io`),
       phone: formattedPhone,
       rawPhone: phoneToUse,
-      city: 'Pune',
+      city: local.city || 'Pune',
       role: 'Home Buyer & Investor',
       avatar: initials,
-      free_attempts_left: local.free_attempts_left,
-      free_attempts_used: local.free_attempts_used,
-      is_payment_done: local.is_payment_done,
-      selected_plan: local.selected_plan,
+      free_attempts_left: local.free_attempts_left !== undefined ? local.free_attempts_left : 3,
+      free_attempts_used: local.free_attempts_used !== undefined ? local.free_attempts_used : 0,
+      is_payment_done: Boolean(local.is_payment_done),
+      selected_plan: local.selected_plan || 'none',
       unlocked_deeds: local.unlocked_deeds || [],
       joinedDate: 'October 2026',
       verifiedBadge: true,
@@ -201,20 +254,21 @@ export function AuthProvider({ children }) {
 
     saveLocalUserByPhone(phoneToUse, newUser);
     setUser(newUser);
-    setFreeAttemptsLeft(local.free_attempts_left);
-    setFreeAttemptsUsed(local.free_attempts_used);
-    setIsPaymentDone(local.is_payment_done);
-    setSelectedPlan(local.selected_plan);
-    setUnlockedTxns(local.unlocked_deeds || []);
+    setFreeAttemptsLeft(newUser.free_attempts_left);
+    setFreeAttemptsUsed(newUser.free_attempts_used);
+    setIsPaymentDone(newUser.is_payment_done);
+    setSelectedPlan(newUser.selected_plan);
+    setUnlockedTxns(newUser.unlocked_deeds || []);
 
-    // Also sync in background with PostgreSQL
-    dbPhoneLogin(phoneToUse, newUser.name).then(dbU => {
+    // Sync in background with PostgreSQL
+    dbPhoneLogin(phoneToUse, newUser.name, newUser.email, newUser.city).then(dbU => {
       if (dbU) {
         if (dbU.free_attempts_left !== undefined) setFreeAttemptsLeft(dbU.free_attempts_left);
         if (dbU.free_attempts_used !== undefined) setFreeAttemptsUsed(dbU.free_attempts_used);
         if (dbU.is_payment_done !== undefined) setIsPaymentDone(Boolean(dbU.is_payment_done));
         if (dbU.selected_plan) setSelectedPlan(dbU.selected_plan);
         if (Array.isArray(dbU.unlocked_deeds)) setUnlockedTxns(dbU.unlocked_deeds);
+        setUser(prev => prev ? ({ ...prev, ...dbU }) : prev);
       }
     }).catch(() => {});
 
@@ -226,7 +280,6 @@ export function AuthProvider({ children }) {
     const formattedPhone = `+91 ${cleanNumber.slice(0, 5)} ${cleanNumber.slice(5)}`;
     const initials = cleanNumber ? `P${cleanNumber.slice(-1)}` : 'PF';
 
-    // 1. Immediately read existing attempts from local registry
     const local = getLocalUserByPhone(cleanNumber);
     const initialAttemptsLeft = local?.free_attempts_left !== undefined ? local.free_attempts_left : 3;
     const initialAttemptsUsed = local?.free_attempts_used !== undefined ? local.free_attempts_used : (3 - initialAttemptsLeft);
@@ -262,6 +315,7 @@ export function AuthProvider({ children }) {
         smsAlerts: true
       };
 
+      saveLocalUserByPhone(cleanNumber, fullUser);
       setUser(fullUser);
       setFreeAttemptsLeft(finalLeft);
       setFreeAttemptsUsed(finalUsed);
@@ -287,6 +341,7 @@ export function AuthProvider({ children }) {
         joinedDate: 'October 2026',
         verifiedBadge: true
       };
+      saveLocalUserByPhone(cleanNumber, fallback);
       setUser(fallback);
       setFreeAttemptsLeft(initialAttemptsLeft);
       setFreeAttemptsUsed(initialAttemptsUsed);
@@ -298,13 +353,15 @@ export function AuthProvider({ children }) {
   };
 
   const signup = ({ name, email, phone, city }) => {
-    const cleanNumber = (phone || '').replace(/\D/g, '').slice(-10) || '9820012345';
+    const cleanNumber = (phone || '').replace(/\D/g, '').slice(-10) || ('98200' + Math.floor(10000 + Math.random() * 90000));
     const formattedPhone = `+91 ${cleanNumber.slice(0, 5)} ${cleanNumber.slice(5)}`;
     
     // Check local registry
     const local = getLocalUserByPhone(cleanNumber) || {
       phone: cleanNumber,
       name: name || `User ${cleanNumber.slice(-4)}`,
+      email: email || `${cleanNumber}@pureframe.io`,
+      city: city || 'Pune',
       free_attempts_left: 3,
       free_attempts_used: 0,
       is_payment_done: false,
@@ -312,7 +369,8 @@ export function AuthProvider({ children }) {
       unlocked_deeds: []
     };
 
-    const initials = (name || 'PF')
+    const displayName = name || local.name;
+    const initials = displayName
       .split(' ')
       .map(n => n.charAt(0).toUpperCase())
       .slice(0, 2)
@@ -320,17 +378,17 @@ export function AuthProvider({ children }) {
 
     const newUser = {
       id: `usr_${cleanNumber}`,
-      name: name || local.name,
-      email: email || `${cleanNumber}@pureframe.io`,
+      name: displayName,
+      email: email || local.email || `${cleanNumber}@pureframe.io`,
       phone: formattedPhone,
       rawPhone: cleanNumber,
-      city: city || 'Pune',
+      city: city || local.city || 'Pune',
       role: 'Verified Property Buyer',
       avatar: initials,
-      free_attempts_left: local.free_attempts_left,
-      free_attempts_used: local.free_attempts_used,
-      is_payment_done: local.is_payment_done,
-      selected_plan: local.selected_plan,
+      free_attempts_left: local.free_attempts_left !== undefined ? local.free_attempts_left : 3,
+      free_attempts_used: local.free_attempts_used !== undefined ? local.free_attempts_used : 0,
+      is_payment_done: Boolean(local.is_payment_done),
+      selected_plan: local.selected_plan || 'none',
       unlocked_deeds: local.unlocked_deeds || [],
       joinedDate: 'October 2026',
       verifiedBadge: true,
@@ -340,18 +398,19 @@ export function AuthProvider({ children }) {
 
     saveLocalUserByPhone(cleanNumber, newUser);
     setUser(newUser);
-    setFreeAttemptsLeft(local.free_attempts_left);
-    setFreeAttemptsUsed(local.free_attempts_used);
-    setIsPaymentDone(local.is_payment_done);
-    setSelectedPlan(local.selected_plan);
-    setUnlockedTxns(local.unlocked_deeds || []);
+    setFreeAttemptsLeft(newUser.free_attempts_left);
+    setFreeAttemptsUsed(newUser.free_attempts_used);
+    setIsPaymentDone(newUser.is_payment_done);
+    setSelectedPlan(newUser.selected_plan);
+    setUnlockedTxns(newUser.unlocked_deeds || []);
 
-    dbPhoneLogin(cleanNumber, name).catch(() => {});
+    // Sync in PostgreSQL
+    dbPhoneLogin(cleanNumber, displayName, newUser.email, newUser.city).catch(() => {});
     return newUser;
   };
 
   const logout = () => {
-    setUser(DEFAULT_USER);
+    setUser(null);
     setFreeAttemptsLeft(3);
     setFreeAttemptsUsed(0);
     setIsPaymentDone(false);
@@ -378,24 +437,48 @@ export function AuthProvider({ children }) {
 
   const unlockTxn = async (txnId) => {
     const txnStr = String(txnId);
+    
+    // If not logged in, request login / signup
+    if (!user) {
+      openAuthModal('signup');
+      return { 
+        success: false, 
+        requireAuth: true, 
+        message: 'Please sign in or create an account to use your 3 free unlocks' 
+      };
+    }
+
     const phone = user?.rawPhone || (user?.phone || '').replace(/\D/g, '').slice(-10) || '9820012345';
     
+    // If already unlocked
+    if (unlockedTxns.includes(txnStr)) {
+      return { success: true, alreadyUnlocked: true, unlocked: true, freeAttemptsLeft };
+    }
+
+    // Active paid plan (unlimited unlocks)
+    if (isPaymentDone) {
+      setUnlockedTxns(prev => Array.from(new Set([...prev, txnStr])));
+      dbUnlockDeed(phone, txnStr).catch(() => {});
+      return { success: true, unlocked: true, isPaymentDone: true, freeAttemptsLeft };
+    }
+
+    // Free attempts exhausted
+    if (freeAttemptsLeft <= 0) {
+      return { success: false, limitReached: true, message: 'Free trial limit reached (3/3 used).' };
+    }
+
+    // Free attempt deduction
     try {
       const res = await dbUnlockDeed(phone, txnStr);
       if (res.unlocked || res.alreadyUnlocked || res.success) {
-        setUnlockedTxns(prev => {
-          if (!prev.includes(txnStr)) {
-            return [...prev, txnStr];
-          }
-          return prev;
-        });
+        setUnlockedTxns(prev => Array.from(new Set([...prev, txnStr])));
 
         const newLeft = res.free_attempts_left !== undefined 
           ? res.free_attempts_left 
-          : (isPaymentDone ? freeAttemptsLeft : Math.max(0, freeAttemptsLeft - 1));
+          : Math.max(0, freeAttemptsLeft - 1);
         const newUsed = res.free_attempts_used !== undefined 
           ? res.free_attempts_used 
-          : (isPaymentDone ? freeAttemptsUsed : freeAttemptsUsed + 1);
+          : freeAttemptsUsed + 1;
 
         setFreeAttemptsLeft(newLeft);
         setFreeAttemptsUsed(newUsed);
@@ -403,12 +486,14 @@ export function AuthProvider({ children }) {
         setUser(prev => {
           if (!prev) return prev;
           const deeds = Array.from(new Set([...(prev.unlocked_deeds || []), txnStr]));
-          return {
+          const updated = {
             ...prev,
             free_attempts_left: newLeft,
             free_attempts_used: newUsed,
             unlocked_deeds: deeds
           };
+          saveLocalUserByPhone(phone, updated);
+          return updated;
         });
 
         return { 
@@ -423,16 +508,23 @@ export function AuthProvider({ children }) {
       }
       return res;
     } catch (err) {
-      if (freeAttemptsLeft > 0 || isPaymentDone) {
-        setUnlockedTxns(prev => [...prev, txnStr]);
-        const newLeft = !isPaymentDone ? Math.max(0, freeAttemptsLeft - 1) : freeAttemptsLeft;
-        const newUsed = !isPaymentDone ? freeAttemptsUsed + 1 : freeAttemptsUsed;
+      if (freeAttemptsLeft > 0) {
+        const newLeft = Math.max(0, freeAttemptsLeft - 1);
+        const newUsed = freeAttemptsUsed + 1;
+        setUnlockedTxns(prev => Array.from(new Set([...prev, txnStr])));
         setFreeAttemptsLeft(newLeft);
         setFreeAttemptsUsed(newUsed);
-        saveLocalUserByPhone(phone, {
-          free_attempts_left: newLeft,
-          free_attempts_used: newUsed,
-          unlocked_deeds: [...unlockedTxns, txnStr]
+        setUser(prev => {
+          if (!prev) return prev;
+          const deeds = Array.from(new Set([...(prev.unlocked_deeds || []), txnStr]));
+          const updated = {
+            ...prev,
+            free_attempts_left: newLeft,
+            free_attempts_used: newUsed,
+            unlocked_deeds: deeds
+          };
+          saveLocalUserByPhone(phone, updated);
+          return updated;
         });
         return { success: true, unlocked: true, freeAttemptsLeft: newLeft };
       }
@@ -444,7 +536,11 @@ export function AuthProvider({ children }) {
     setIsPaymentDone(true);
     setSelectedPlan(planId);
     if (user) {
-      setUser(prev => ({ ...prev, is_payment_done: true, selected_plan: planId }));
+      setUser(prev => {
+        const updated = { ...prev, is_payment_done: true, selected_plan: planId };
+        if (prev.rawPhone) saveLocalUserByPhone(prev.rawPhone, updated);
+        return updated;
+      });
     } else {
       const subscriberUser = {
         id: `usr_${Date.now()}`,
@@ -464,6 +560,7 @@ export function AuthProvider({ children }) {
         emailNotifications: true,
         smsAlerts: true
       };
+      saveLocalUserByPhone('9172272519', subscriberUser);
       setUser(subscriberUser);
     }
 
@@ -485,7 +582,12 @@ export function AuthProvider({ children }) {
     setFreeAttemptsUsed(0);
     setIsPaymentDone(false);
     setSelectedPlan('none');
-    setUser(prev => prev ? ({ ...prev, free_attempts_left: 3, free_attempts_used: 0, is_payment_done: false, selected_plan: 'none' }) : prev);
+    setUser(prev => {
+      if (!prev) return null;
+      const updated = { ...prev, free_attempts_left: 3, free_attempts_used: 0, is_payment_done: false, selected_plan: 'none' };
+      saveLocalUserByPhone(phone, updated);
+      return updated;
+    });
   };
 
   const isTxnUnlocked = (txnId) => {
@@ -525,7 +627,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: true,
+        isAuthenticated: Boolean(user && (user.rawPhone || user.phone || user.id)),
         login,
         loginWithPhoneOtp,
         signup,
@@ -544,7 +646,12 @@ export function AuthProvider({ children }) {
         isPaymentDone,
         selectedPlan,
         selectPlan,
-        resetAttempts
+        resetAttempts,
+        isAuthModalOpen,
+        authModalTab,
+        openAuthModal,
+        closeAuthModal,
+        handleAuthSuccess
       }}
     >
       {children}

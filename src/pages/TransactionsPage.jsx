@@ -25,7 +25,17 @@ export default function TransactionsPage({
   cityId = 'mumbai', 
   onNavigate 
 }) {
-  const { isTxnUnlocked, isPropertySaved, toggleSaveProperty } = useAuth();
+  const { 
+    isTxnUnlocked, 
+    isPropertySaved, 
+    toggleSaveProperty, 
+    isAuthenticated, 
+    openAuthModal, 
+    unlockTxn, 
+    freeAttemptsLeft, 
+    isPaymentDone 
+  } = useAuth();
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [txTypeFilter, setTxTypeFilter] = useState('all');
@@ -39,6 +49,30 @@ export default function TransactionsPage({
   // Local unlocked items state
   const [unlockedTxnIds, setUnlockedTxnIds] = useState(new Set());
   const [selectedTxnForUnlock, setSelectedTxnForUnlock] = useState(null);
+
+  const handleUnlockSingleTxn = async (txn) => {
+    if (!isAuthenticated) {
+      openAuthModal('signup', async () => {
+        const res = await unlockTxn(txn.id);
+        if (res.unlocked || res.success) {
+          setUnlockedTxnIds(prev => new Set(prev).add(txn.id));
+        }
+      });
+      return;
+    }
+
+    if (!isPaymentDone && freeAttemptsLeft <= 0) {
+      setSelectedTxnForUnlock(txn);
+      return;
+    }
+
+    const res = await unlockTxn(txn.id);
+    if (res.unlocked || res.success) {
+      setUnlockedTxnIds(prev => new Set(prev).add(txn.id));
+    } else if (res.limitReached) {
+      setSelectedTxnForUnlock(txn);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -537,7 +571,7 @@ export default function TransactionsPage({
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     e.preventDefault();
-                                    setUnlockedTxnIds(prev => new Set(prev).add(txn.id));
+                                    handleUnlockSingleTxn(txn);
                                   }}
                                   title="Click to unlock price directly"
                                   style={{
@@ -629,7 +663,7 @@ export default function TransactionsPage({
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();
-                              setUnlockedTxnIds(prev => new Set(prev).add(txn.id));
+                              handleUnlockSingleTxn(txn);
                             }}
                             title="Click to unlock price directly"
                             style={{

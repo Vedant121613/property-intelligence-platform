@@ -3,12 +3,14 @@ import HeroBanner from '../components/HeroBanner';
 import ProjectCard from '../components/ProjectCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getLocalityProjects } from '../services/propertyService';
+import { useAuth } from '../context/AuthContext';
 
 export default function LocalityPage({
   cityId = 'pune',
   localityId = 'saswad-road',
   onNavigate
 }) {
+  const { isAuthenticated, openAuthModal, isPaymentDone } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [duration, setDuration] = useState('12m');
@@ -69,7 +71,17 @@ export default function LocalityPage({
             </span>
             <button
               type="button"
-              onClick={() => setUnlockAllPrices(prev => !prev)}
+              onClick={() => {
+                if (isPaymentDone) {
+                  setUnlockAllPrices(prev => !prev);
+                  return;
+                }
+                if (!isAuthenticated) {
+                  openAuthModal('signup');
+                  return;
+                }
+                onNavigate('plans');
+              }}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',

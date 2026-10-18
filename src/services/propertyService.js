@@ -125,7 +125,11 @@ export function findPuneProject(projectId, talukaSlug, villageSlug) {
       p.id === projectId || 
       p.projectId === projectId || 
       p.slug === pNorm || 
-      p.name.toLowerCase() === projectId.toLowerCase()
+      p.name.toLowerCase() === projectId.toLowerCase() ||
+      (p.aliases && p.aliases.includes(pNorm)) ||
+      (p.slug && pNorm.replace(/-kharadi$/, '') === p.slug.replace(/-kharadi$/, '')) ||
+      (p.slug && pNorm.includes(p.slug)) ||
+      (p.slug && p.slug.includes(pNorm))
     );
     if (kMatch) {
       return {
@@ -377,7 +381,8 @@ export async function getProjectDetails(projectId = 'heera-solitaire', talukaSlu
       reraComplaints: { totalComplaints: '0', items: [] }
     });
   }
-  const txns = [
+  const isKharadi = locality.toLowerCase().includes('kharadi') || normalized.includes('kharadi');
+  const txns = isKharadi ? [] : [
     {
       id: `${normalized}-101`,
       date: '04 Oct, 2026',
@@ -466,14 +471,14 @@ export async function getProjectTransactionsList(projectId, filters = {}) {
     localityName = pRecord.village || 'Kharadi';
     list = pRecord.recentTransactions.map(t => ({
       id: t.id,
-      date: t.date || 'Feb 2026',
+      date: t.date || '-',
       project: pRecord.name,
       locality: localityName,
-      type: t.docType || 'Sale / Title Deed',
-      floorTower: t.building || 'Wing A',
+      type: t.docType || 'Sale Deed',
+      floorTower: t.floorTower || t.building || 'Wing A',
       unit: t.unit || 'Residential Unit',
-      amount: t.priceFormatted || '₹ 49.56 Lac',
-      displayAmount: t.priceFormatted || '₹ 49.56 Lac',
+      amount: t.priceFormatted || '-',
+      displayAmount: t.priceFormatted || '-',
       purchaser: t.purchaser,
       seller: t.seller,
       docNo: t.docNo,
@@ -482,19 +487,19 @@ export async function getProjectTransactionsList(projectId, filters = {}) {
     }));
   } else {
     // Collect real Kharadi transactions across projects
-    for (const p of kharadiData.projects) {
+    for (const p of (kharadiData.projects || [])) {
       if (p.recentTransactions) {
         for (const t of p.recentTransactions) {
           list.push({
             id: t.id,
-            date: t.date || 'Feb 2026',
+            date: t.date || '-',
             project: p.name,
             locality: 'Kharadi',
-            type: t.docType || 'Sale / Title Deed',
-            floorTower: t.building || 'Wing A',
+            type: t.docType || 'Sale Deed',
+            floorTower: t.floorTower || t.building || 'Wing A',
             unit: t.unit || 'Residential Unit',
-            amount: t.priceFormatted || '₹ 49.56 Lac',
-            displayAmount: t.priceFormatted || '₹ 49.56 Lac',
+            amount: t.priceFormatted || '-',
+            displayAmount: t.priceFormatted || '-',
             purchaser: t.purchaser,
             seller: t.seller,
             docNo: t.docNo,

@@ -22,7 +22,7 @@ dist-ssr
 *.local
 
 # Raw source data dumps
-# (data 1.9.csv is tracked so Render builds authentic data)
+data 1.9.sql
 
 # Editor directories and files
 .vscode/*

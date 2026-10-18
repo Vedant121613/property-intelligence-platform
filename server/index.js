@@ -982,7 +982,15 @@ app.get('/api/kharadi/deeds', async (req, res) => {
 });
 
 // GET /api/record/:id - Fetch single verified property deed record by ID
-app.get(['/api/record/:id', '/api/transaction/:id', '/api/deed/:id'], async (req, res) => {
+app.get([
+  '/api/record/:id', 
+  '/record/:id', 
+  '/api/v1/record/:id', 
+  '/api/transaction/:id', 
+  '/transaction/:id', 
+  '/api/deed/:id', 
+  '/deed/:id'
+], async (req, res) => {
   try {
     const rawId = req.params.id;
     const cleanId = String(rawId).replace(/^kh-/, '');

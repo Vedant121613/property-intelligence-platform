@@ -530,11 +530,26 @@ export async function getTransactionRecordDetails(transactionId = 'kh-2470') {
 
   // 1. Try querying PostgreSQL Backend API
   try {
-    const res = await fetch(`${API_BASE_URL.replace(/\/v1$/, '')}/record/${encodeURIComponent(transactionId)}`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.record) {
-        raw = data.record;
+    const rawBase = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || API_BASE_URL || '';
+    const cleanBase = rawBase.replace(/\/+$/, '');
+    const endpoints = [
+      `${cleanBase}/api/record/${encodeURIComponent(transactionId)}`,
+      `${cleanBase}/record/${encodeURIComponent(transactionId)}`,
+      `/api/record/${encodeURIComponent(transactionId)}`
+    ].filter((v, i, a) => v && a.indexOf(v) === i);
+
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.record) {
+            raw = data.record;
+            break;
+          }
+        }
+      } catch {
+        // Next endpoint
       }
     }
   } catch (err) {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Search, Lock, Unlock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function TransactionsModal({
   isOpen,
@@ -7,10 +8,12 @@ export default function TransactionsModal({
   projectName = 'Heera Solitaire',
   transactions = { sale: [], rent: [] }
 }) {
+  const { isTxnUnlocked, unlockTxn, isAuthenticated, openAuthModal, isPaymentDone, freeAttemptsLeft } = useAuth();
   const [filterType, setFilterType] = useState('all');
   const [unitSearch, setUnitSearch] = useState('');
   const [unlockedIds, setUnlockedIds] = useState(new Set());
-  const [allUnlocked, setAllUnlocked] = useState(true);
+  const [hiddenIds, setHiddenIds] = useState(new Set());
+  const [allUnlocked, setAllUnlocked] = useState(false);
 
   if (!isOpen) return null;
 
@@ -32,22 +35,58 @@ export default function TransactionsModal({
     return true;
   });
 
-  const toggleUnlockRow = (id) => {
-    setUnlockedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const toggleUnlockRow = async (id) => {
+    const isCurrentlyUnlocked = (allUnlocked || unlockedIds.has(id) || isTxnUnlocked(id)) && !hiddenIds.has(id);
+
+    if (isCurrentlyUnlocked) {
+      setHiddenIds(prev => new Set(prev).add(id));
+      return;
+    }
+
+    if (allUnlocked || unlockedIds.has(id) || isTxnUnlocked(id)) {
+      setHiddenIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      return;
+    }
+
+    if (!isAuthenticated) {
+      openAuthModal('signup', async () => {
+        const res = await unlockTxn(id);
+        if (res.unlocked || res.success) {
+          setUnlockedIds(prev => new Set(prev).add(id));
+          setHiddenIds(prev => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          });
+        }
+      });
+      return;
+    }
+
+    const res = await unlockTxn(id);
+    if (res.unlocked || res.success) {
+      setUnlockedIds(prev => new Set(prev).add(id));
+      setHiddenIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
   };
 
   const handleToggleAll = () => {
     if (allUnlocked) {
       setAllUnlocked(false);
       setUnlockedIds(new Set());
+      setHiddenIds(new Set());
     } else {
       setAllUnlocked(true);
       setUnlockedIds(new Set(combined.map(c => c.id)));
+      setHiddenIds(new Set());
     }
   };
 
@@ -154,7 +193,7 @@ export default function TransactionsModal({
               <tbody>
                 {filtered.length > 0 ? (
                   filtered.map((row) => {
-                    const isUnlocked = allUnlocked || unlockedIds.has(row.id);
+                    const isUnlocked = (allUnlocked || unlockedIds.has(row.id) || isTxnUnlocked(row.id)) && !hiddenIds.has(row.id);
                     return (
                       <tr key={row.id}>
                         <td>{row.date}</td>

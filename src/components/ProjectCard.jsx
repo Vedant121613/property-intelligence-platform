@@ -12,20 +12,18 @@ export default function ProjectCard({ project, onClick, defaultUnlocked = false 
     }
   }, [defaultUnlocked, isTxnUnlocked, project.id]);
 
-  const formattedCount = project.saleTxns === 0 
-    ? '00' 
-    : (project.saleTxns !== undefined ? project.saleTxns : 18);
+  const formattedCount = (project.saleTxns !== undefined && project.saleTxns !== null) ? project.saleTxns : 0;
 
   const getDisplayPrice = () => {
-    if (project.lastSoldPrice && project.lastSoldPrice !== 'Rs. NaN Lac') {
+    if (project.lastSoldPrice && project.lastSoldPrice !== 'Rs. NaN Lac' && project.lastSoldPrice !== '-') {
       return project.lastSoldPrice.startsWith('₹') || project.lastSoldPrice.startsWith('Rs')
         ? project.lastSoldPrice
         : `₹ ${project.lastSoldPrice}`;
     }
-    if (project.lastSold && project.lastSold.amount) {
+    if (project.lastSold && project.lastSold.amount && project.lastSold.amount !== '-') {
       return project.lastSold.amount;
     }
-    if (project.quotedPricing) {
+    if (project.quotedPricing && project.quotedPricing !== '-') {
       return project.quotedPricing.startsWith('₹') ? project.quotedPricing : `₹ ${project.quotedPricing}`;
     }
     if (project.avgPrice && !isNaN(project.avgPrice) && Number(project.avgPrice) > 0) {
@@ -34,7 +32,7 @@ export default function ProjectCard({ project, onClick, defaultUnlocked = false 
         ? `₹ ${(avg / 10000000).toFixed(2)} Cr`
         : `₹ ${(avg / 100000).toFixed(2)} Lac`;
     }
-    return '₹ 45.00 Lac - 1.25 Cr';
+    return '-';
   };
 
   const priceText = getDisplayPrice();
@@ -121,7 +119,7 @@ export default function ProjectCard({ project, onClick, defaultUnlocked = false 
             <span>{unlocked ? priceText : 'Unlock Price'}</span>
           </button>
 
-          {project.rera && (
+          {project.rera && (String(project.rera).startsWith('P5') || String(project.rera).startsWith('MahaRERA')) && (
             <span style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 600 }}>
               • {project.rera}
             </span>

@@ -172,8 +172,12 @@ export default function TransactionsTable({
           <tbody>
             {rows.length > 0 ? (
               rows.slice(0, 5).map((row) => {
-                const isUnlocked = allUnlocked || unlockedIds.has(row.id) || isTxnUnlocked(row.id);
-                const displayAmt = row.amount || row.priceFormatted || '₹ 84.50 Lac';
+                const rawAmt = row.amount || row.priceFormatted;
+                const displayAmt = (rawAmt && rawAmt !== 'Rs. NaN Lac' && rawAmt !== '₹ 0.00 Lac' && rawAmt !== '-')
+                  ? (rawAmt.startsWith('₹') || rawAmt.startsWith('Rs') ? rawAmt : `₹ ${rawAmt}`)
+                  : (row.price && Number(row.price) > 0 
+                      ? (Number(row.price) >= 10000000 ? `₹ ${(Number(row.price) / 10000000).toFixed(2)} Cr` : `₹ ${(Number(row.price) / 100000).toFixed(2)} Lac`)
+                      : '-');
 
                 return (
                   <tr key={row.id}>

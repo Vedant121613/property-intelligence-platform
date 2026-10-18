@@ -102,7 +102,9 @@ export async function runAutoMigration() {
     let needKharadiSeed = !kharadiCheck.rows[0]?.exists;
     if (!needKharadiSeed) {
       const countRes = await query(`SELECT COUNT(*) FROM kharadi_projects`);
-      if (parseInt(countRes.rows[0]?.count || 0, 10) === 0) {
+      const currentCount = parseInt(countRes.rows[0]?.count || 0, 10);
+      if (currentCount < 200) {
+        console.log(`[DB Auto-Init] Existing kharadi_projects count (${currentCount}) is less than expected 231. Reseeding with full authentic dataset...`);
         needKharadiSeed = true;
       }
     }

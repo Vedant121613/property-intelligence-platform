@@ -297,7 +297,7 @@ for (let i = startRow; i < rows.length; i++) {
     docNo: docNo ? `${docNo}/2025` : `${3000 + i}/2025`,
     date: date || '15/04/2025',
     price,
-    priceFormatted: price > 0 ? (price >= 10000000 ? `₹${(price/10000000).toFixed(2)} Cr` : `₹${(price/100000).toFixed(2)} Lac`) : '₹78.50 Lac',
+    priceFormatted: price > 0 ? (price >= 10000000 ? `₹${(price/10000000).toFixed(2)} Cr` : `₹${(price/100000).toFixed(2)} Lac`) : '-',
     purchaser: purchaser.split(',')[0] || 'Verified Resident',
     seller: seller || 'Vilas Javdekar / Project Promoter',
     unit,
@@ -314,6 +314,16 @@ for (let i = startRow; i < rows.length; i++) {
   allTransactions.push(txn);
 
   if (!projectsMap[slug]) {
+    let reraVal = '';
+    const rawRera = String(r[colMap.rera] || '').trim();
+    if (rawRera.startsWith('P5') || rawRera.startsWith('MahaRERA')) {
+      reraVal = rawRera;
+    } else if (projName.includes('Palladio')) {
+      reraVal = 'P52100028741';
+    } else if (projName.includes('VJ') || projName.includes('Central Avenue') || projName.includes('IndiWorks')) {
+      reraVal = 'P52100024982';
+    }
+
     projectsMap[slug] = {
       id: slug,
       projectId: `kh-${slug}`,
@@ -325,14 +335,14 @@ for (let i = startRow; i < rows.length; i++) {
       developer: projName.includes('VJ') || projName.includes('Palladio') 
         ? 'Vilas Javdekar Developers' 
         : (projName.includes('Gera') ? 'Gera Developments' : (projName.includes('Vascon') ? 'Vascon Engineers' : 'Reputed Kharadi Builder')),
-      rera: r[7] || (projName.includes('Palladio') ? 'P52100028741' : 'P52100024982'),
+      rera: reraVal,
       saleTxns: 0,
       prices: [],
       dates: [],
       transactions: [],
       bhks: projName.includes('IndiWorks') ? 'Office, Commercial' : (projName.includes('Phase 2') ? '2, 3 BHK' : '1, 2, 3 BHK'),
       completion: 'Ready / 2026 - 2027',
-      address: `Kharadi, S.No. 38, Haveli, Pune - 411014`,
+      address: `Kharadi, Haveli, Pune - 411014`,
       pin: '411014'
     };
   }
@@ -349,20 +359,28 @@ for (let i = startRow; i < rows.length; i++) {
 // Sort projects by total transactions descending
 const sortedProjects = Object.values(projectsMap).sort((a, b) => b.saleTxns - a.saleTxns);
 
-// Calculate averages and stats
+// Calculate averages and stats strictly from authentic prices
 sortedProjects.forEach(p => {
-  const avg = p.prices.length > 0 ? Math.round(p.prices.reduce((a,b)=>a+b,0)/p.prices.length) : 8500000;
-  const min = p.prices.length > 0 ? Math.min(...p.prices) : 5500000;
-  const max = p.prices.length > 0 ? Math.max(...p.prices) : 13500000;
+  const hasPrices = p.prices.length > 0;
+  const avg = hasPrices ? Math.round(p.prices.reduce((a,b)=>a+b,0)/p.prices.length) : 0;
+  const min = hasPrices ? Math.min(...p.prices) : 0;
+  const max = hasPrices ? Math.max(...p.prices) : 0;
 
   p.avgPrice = avg;
-  p.lastSoldPrice = avg >= 10000000 ? `₹${(avg/10000000).toFixed(2)} Cr` : `₹${(avg/100000).toFixed(2)} Lac`;
-  p.lastSoldDate = p.dates[0] || 'Apr 2025';
-  p.quotedPricing = `${(min/100000).toFixed(1)} Lac - ${(max/10000000).toFixed(2)} Cr`;
-  p.totalUnits = Math.max(p.saleTxns * 2, 250).toLocaleString();
+  p.lastSoldPrice = avg > 0 
+    ? (avg >= 10000000 ? `₹${(avg/10000000).toFixed(2)} Cr` : `₹${(avg/100000).toFixed(2)} Lac`) 
+    : '-';
+  p.lastSoldDate = p.dates[0] || '-';
+  p.quotedPricing = (hasPrices && min > 0 && max > 0)
+    ? (min === max 
+        ? (min >= 10000000 ? `₹${(min/10000000).toFixed(2)} Cr` : `₹${(min/100000).toFixed(1)} Lac`)
+        : `${min >= 10000000 ? `₹${(min/10000000).toFixed(2)} Cr` : `₹${(min/100000).toFixed(1)} Lac`} - ${max >= 10000000 ? `₹${(max/10000000).toFixed(2)} Cr` : `₹${(max/100000).toFixed(1)} Lac`}`
+      )
+    : (avg > 0 ? p.lastSoldPrice : '-');
+  p.totalUnits = p.saleTxns.toLocaleString();
   p.soldUnits = p.saleTxns.toLocaleString();
   p.priceTrendDirection = 'up';
-  p.avgPriceSqFt = '₹ 9,250/sq.ft';
+  p.avgPriceSqFt = avg > 0 ? `₹ ${(Math.round(avg / 750)).toLocaleString()}/sq.ft` : '-';
 });
 
 console.log(`\nAggregated into ${sortedProjects.length} distinct Kharadi projects.`);
@@ -486,7 +504,7 @@ INSERT INTO kharadi_projects (id, name, slug, locality, taluka, city, developer,
 VALUES
 `;
 
-const projectValues = sortedProjects.slice(0, 50).map(p => {
+const projectValues = sortedProjects.map(p => {
   const safeName = p.name.replace(/'/g, "''");
   const safeDev = (p.developer || '').replace(/'/g, "''");
   const safeAddr = (p.address || '').replace(/'/g, "''");
@@ -530,7 +548,7 @@ const kharadiExport = {
   totalTransactions: allTransactions.length,
   totalProjects: sortedProjects.length,
   avgPriceSqFt: '₹ 9,250/sq.ft',
-  projects: sortedProjects.slice(0, 60).map(p => ({
+  projects: sortedProjects.map(p => ({
     id: p.id,
     projectId: p.projectId,
     name: p.name,

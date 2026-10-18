@@ -405,7 +405,7 @@ export async function dbGetPuneProjects(talukaSlug, villageSlug, search = '') {
     const params = new URLSearchParams({
       taluka: talukaSlug,
       village: villageSlug,
-      limit: '150'
+      limit: '500'
     });
     if (search) params.append('search', search);
 

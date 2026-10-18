@@ -728,7 +728,7 @@ app.get('/api/pune/villages/:talukaSlug', async (req, res) => {
 // GET /api/pune/projects - Fetch projects by taluka and village
 app.get('/api/pune/projects', async (req, res) => {
   try {
-    const { taluka, village, search, limit = 150, offset = 0 } = req.query;
+    const { taluka, village, search, limit = 500, offset = 0 } = req.query;
 
     // Special handler: If village is Kharadi
     if (village && (village.toLowerCase() === 'kharadi' || village.toLowerCase() === 'kharadi-pune')) {

@@ -432,10 +432,7 @@ export default function CityPage({ cityId = 'pune', onNavigate }) {
                 {filteredProjects.map((project) => (
                   <ProjectCard
                     key={project.id}
-                    project={{
-                      ...project,
-                      saleTxns: Math.floor(15 + (Math.abs(project.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)) % 65))
-                    }}
+                    project={project}
                     onClick={() => {
                       onNavigate('project', {
                         cityId: 'pune',

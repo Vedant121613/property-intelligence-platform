@@ -313,20 +313,30 @@ export async function getProjectDetails(projectId = 'heera-solitaire', talukaSlu
 
   // If pRecord has real registered transactions from Kharadi data
   if (pRecord?.recentTransactions && pRecord.recentTransactions.length > 0) {
-    const realTxns = pRecord.recentTransactions.map(t => ({
-      id: t.id,
-      date: t.date || 'Feb 2026',
-      type: t.docType || 'Sale / Title Deed',
-      floorTower: t.building || 'Wing A',
-      unit: t.unit || 'Residential Unit',
-      amount: t.priceFormatted || '₹ 49.56 Lac',
-      purchaser: t.purchaser || 'Verified Citizen',
-      seller: t.seller || pRecord.developer,
-      docNo: t.docNo,
-      carpetArea: t.carpetArea,
-      isLocked: true,
-      project: projectName
-    }));
+    const realTxns = pRecord.recentTransactions.map(t => {
+      const rawPrice = t.priceFormatted || t.amount;
+      const fmtPrice = (rawPrice && rawPrice !== 'Rs. NaN Lac' && rawPrice !== '₹ 0.00 Lac' && rawPrice !== '-')
+        ? (rawPrice.startsWith('₹') || rawPrice.startsWith('Rs') ? rawPrice : `₹ ${rawPrice}`)
+        : (t.price && Number(t.price) > 0 
+            ? (Number(t.price) >= 10000000 ? `₹ ${(Number(t.price) / 10000000).toFixed(2)} Cr` : `₹ ${(Number(t.price) / 100000).toFixed(2)} Lac`)
+            : '-');
+
+      return {
+        id: t.id,
+        date: t.date || '-',
+        type: t.docType || 'Sale / Title Deed',
+        floorTower: t.building || '-',
+        unit: t.unit || 'Residential Unit',
+        amount: fmtPrice,
+        priceFormatted: fmtPrice,
+        purchaser: t.purchaser || 'Verified Citizen',
+        seller: t.seller || pRecord.developer,
+        docNo: t.docNo,
+        carpetArea: t.carpetArea,
+        isLocked: true,
+        project: projectName
+      };
+    });
 
     return Promise.resolve({
       id: normalized,
@@ -337,16 +347,16 @@ export async function getProjectDetails(projectId = 'heera-solitaire', talukaSlu
       taluka,
       address,
       developer: pRecord.developer || 'Reputed Pune Developer',
-      totalUnits: `${pRecord.saleTxns ? Math.max(pRecord.saleTxns * 2, 200) : 250} Units`,
-      soldUnits: `${pRecord.saleTxns || 120} Units`,
+      totalUnits: `${pRecord.saleTxns || realTxns.length} Units`,
+      soldUnits: `${pRecord.saleTxns || realTxns.length} Units`,
       completion: pRecord.completion || 'Ready / 2026',
       bhks: pRecord.bhks || '1, 2, 3 BHK',
       rera: reraNo,
-      quotedPricing: pRecord.quotedPricing || '₹ 45 Lac - 1.25 Cr',
+      quotedPricing: (pRecord.quotedPricing && pRecord.quotedPricing !== '-') ? pRecord.quotedPricing : '-',
       reraNumbers: reraNo,
       lastSold: {
-        date: pRecord.lastSoldDate || '21/02/2026',
-        amount: pRecord.lastSoldPrice || '₹ 49.56 Lac',
+        date: pRecord.lastSoldDate || '-',
+        amount: (pRecord.lastSoldPrice && pRecord.lastSoldPrice !== '-') ? pRecord.lastSoldPrice : '-',
         direction: 'up'
       },
       bhkAnalysis: {
@@ -374,7 +384,7 @@ export async function getProjectDetails(projectId = 'heera-solitaire', talukaSlu
       type: 'Sale',
       floorTower: 'Floor 7, Tower A',
       unit: '702',
-      amount: '₹ 84.50 Lac',
+      amount: '-',
       isLocked: true,
       project: projectName
     },
@@ -384,7 +394,7 @@ export async function getProjectDetails(projectId = 'heera-solitaire', talukaSlu
       type: 'Sale',
       floorTower: 'Floor 12, Tower B',
       unit: '1204',
-      amount: '₹ 92.20 Lac',
+      amount: '-',
       isLocked: true,
       project: projectName
     },
@@ -394,27 +404,7 @@ export async function getProjectDetails(projectId = 'heera-solitaire', talukaSlu
       type: 'Sale',
       floorTower: 'Floor 4, Tower A',
       unit: '401',
-      amount: '₹ 76.80 Lac',
-      isLocked: true,
-      project: projectName
-    },
-    {
-      id: `${normalized}-104`,
-      date: '22 Jul, 2026',
-      type: 'Sale',
-      floorTower: 'Floor 15, Tower C',
-      unit: '1503',
-      amount: '₹ 1.15 Cr',
-      isLocked: true,
-      project: projectName
-    },
-    {
-      id: `${normalized}-105`,
-      date: '10 Jun, 2026',
-      type: 'Sale',
-      floorTower: 'Floor 2, Tower A',
-      unit: '205',
-      amount: '₹ 68.00 Lac',
+      amount: '-',
       isLocked: true,
       project: projectName
     }
@@ -434,11 +424,11 @@ export async function getProjectDetails(projectId = 'heera-solitaire', talukaSlu
     completion: pRecord?.regDate ? `Dec ${parseInt(pRecord.regDate.slice(0, 4)) + 4}` : 'Dec 2027',
     bhks: '1, 2, 3 BHK',
     rera: reraNo,
-    quotedPricing: '₹ 68 Lac - 1.20 Cr',
+    quotedPricing: '-',
     reraNumbers: reraNo,
     lastSold: {
-      date: 'Oct 2026',
-      amount: 'Rs. 84.50 Lac',
+      date: '-',
+      amount: '-',
       direction: 'up'
     },
     bhkAnalysis: {
